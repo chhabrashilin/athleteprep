@@ -69,6 +69,14 @@ Set `NEXT_PUBLIC_ENABLE_REAL_AI=true` and `AI_PROVIDER=openai` (or chosen provid
 
 ---
 
+### Admin / Analytics
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ADMIN_EMAILS` | No | — | Comma-separated list of email addresses that can access `/admin/analytics` and `/admin/feedback`. Example: `founder@example.com,cofounder@example.com`. If empty, admin pages deny all access. |
+
+---
+
 ### Feature Flags
 
 | Variable | Required | Default | Description |

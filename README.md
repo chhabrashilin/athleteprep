@@ -2,21 +2,91 @@
 
 **AI game review in 10 minutes.**
 
-GameIQ turns game film into coach-ready insights, player feedback, evidence-linked clips, and next-practice plans — powered by AI.
+GameIQ is a coach-first AI sports intelligence platform. Coaches upload game film, tag key moments, and receive a structured AI report with evidence-linked coaching insights, player feedback, opponent tendencies, and next-practice recommendations.
 
 ---
 
-## What is GameIQ?
+## What GameIQ Does
 
-GameIQ is a coach-first AI sports intelligence platform. Coaches and analysts upload game film, add structured metadata, tag key events with timestamps and notes, and receive a structured AI-generated report with:
+GameIQ takes the raw material coaches already have — game video, a roster, and their own observations — and turns it into a structured, evidence-backed report that is ready to share with players and staff.
 
-- Top 5 coaching insights with confidence scores and evidence
-- Player-by-player reports
-- Opponent tendency analysis
-- Next-practice recommendations
-- Coach verification workflow
+**Input:**
+- Game metadata (opponent, date, result, score, home/away, competition level)
+- Roster and player data
+- Coach notes and opponent notes
+- Manually tagged key moments (timestamp, event type, players involved, importance, description)
 
-See [`/docs/PROJECT_CONSTITUTION.md`](docs/PROJECT_CONSTITUTION.md) for the full product vision.
+**Output:**
+- Executive summary
+- Top 5 coaching insights with confidence scores (High / Medium / Low) and evidence references
+- Player-by-player reports (strengths, improvement areas, key moments)
+- Opponent tendency analysis with recommended responses
+- Next-practice drill recommendations with coaching points
+- Coach verification and inline editing for every AI output
+- Shareable reports with 4 visibility modes (staff, player-specific, private link, public summary)
+- Export-ready print/PDF view
+
+Every AI claim is grounded in the inputs the coach provided. Nothing is invented. Coaches can verify, correct, or edit any output — and those corrections are preserved in an audit trail.
+
+---
+
+## Why This Exists
+
+Most sports teams record more game footage than they can meaningfully analyze. A coaching staff might spend 2–4 hours on post-game film review and still produce vague player feedback ("play smarter," "work harder"). Smaller programs cannot afford dedicated analysts.
+
+GameIQ answers the questions coaches actually need answered:
+- What happened and why did it matter?
+- Who was involved?
+- What evidence supports this?
+- How confident is the AI?
+- What should each player work on individually?
+- What should we run at the next practice?
+
+The v1 approach does not require computer vision. AI reports are generated from structured inputs — what coaches tag and note. This is intentional: it delivers immediate, trustworthy value while the platform builds toward automated event detection.
+
+---
+
+## Core MVP Features
+
+| Feature | Status |
+|---------|--------|
+| Email/password auth with protected routes | ✅ |
+| Team workspaces with role-based access (owner, coach, analyst, player) | ✅ |
+| Roster management — full CRUD, archive, search, position/status filter | ✅ |
+| Game/practice creation with 4-section metadata form | ✅ |
+| Video upload to private Supabase Storage with signed URL playback | ✅ |
+| Manual timestamp tagging (12 event fields per event, AI readiness badge) | ✅ |
+| AI report generation — mock (no API cost) or OpenAI GPT-4o-mini | ✅ |
+| Strict Zod validation on all AI JSON outputs | ✅ |
+| 14 AI guardrail rules in system prompt | ✅ |
+| Report dashboard — insights, players, opponent, practice, evidence sections | ✅ |
+| Insight detail with video seek to timestamp | ✅ |
+| Coach verification (accurate / partially accurate / inaccurate / edited) | ✅ |
+| Inline editing with append-only audit trail | ✅ |
+| 4-mode shareable reports with 144-bit entropy tokens | ✅ |
+| Export-ready print/PDF view with section selector | ✅ |
+| Founder analytics — 13 instrumented events, admin dashboard | ✅ |
+| Landing page, demo experience, request-access form, feedback form | ✅ |
+| Demo workspace (cricket team, 12 timestamps, full AI report) | ✅ |
+
+---
+
+## Product Demo Flow
+
+With demo mode enabled (`NEXT_PUBLIC_ENABLE_MOCK_DATA=true`):
+
+1. Sign in to your account
+2. Visit `/demo/setup` and click **Create demo workspace**
+3. The app creates a demo team, game, roster, and AI report in ~10 seconds
+4. You are redirected to the full AI report dashboard
+
+The demo workspace contains:
+- **Madison Cricket XI** — 10-player cricket team with positions and jersey numbers
+- **Match vs Lakeside CC** — game with score, result, coach notes, and opponent notes
+- **12 tagged key moments** — batting, bowling, fielding, and opponent events
+- **Full AI coaching report** — insights, player reports, practice recommendations, opponent tendencies
+
+See [`/docs/DEMO_DATA.md`](docs/DEMO_DATA.md) and [`/docs/FOUNDER_DEMO_SCRIPT.md`](docs/FOUNDER_DEMO_SCRIPT.md) for the full demo guide.
 
 ---
 
@@ -24,223 +94,119 @@ See [`/docs/PROJECT_CONSTITUTION.md`](docs/PROJECT_CONSTITUTION.md) for the full
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 (strict) |
+| Framework | Next.js (App Router) |
+| Language | TypeScript 5 (strict mode) |
 | UI | React 19 + Tailwind CSS 4 |
-| Font | Geist Sans / Geist Mono |
-| Auth | Supabase Auth + @supabase/ssr |
-| Database | Supabase Postgres + RLS (Phase 2) |
-| Storage | Supabase Storage (Phase 3) |
-| AI | Provider-agnostic layer (mock → OpenAI/Anthropic) |
+| Auth | Supabase Auth + `@supabase/ssr` |
+| Database | Supabase Postgres + Row Level Security |
+| Storage | Supabase Storage (private video bucket) |
+| AI | Provider-agnostic layer — mock default, OpenAI production, Anthropic/Gemini stubs |
+| Validation | Zod (strict JSON schema on all AI outputs) |
 | Icons | Lucide React |
 | Utilities | clsx, tailwind-merge |
-| Deployment | Vercel (Phase 7) |
+| Deployment | Vercel |
 
 ---
 
-## Project Status
+## Architecture Overview
 
-**Current phase: Phase 5/6 — Real AI Provider Layer + Strict JSON Generation implemented**
+```
+Browser
+  └── Next.js App Router
+        ├── Server Components — data fetching, layout
+        ├── Client Components — forms, video player, interactivity
+        ├── Server Actions — all mutations (team, game, player, report)
+        └── Route Handlers — analysis job API
+              └── Supabase (Auth + Postgres + Storage)
+                    └── AI Provider Layer
+                          ├── Mock (deterministic, no API cost)
+                          ├── OpenAI GPT-4o-mini (production-ready)
+                          ├── Anthropic stub (clean interface, not implemented)
+                          └── Gemini stub (clean interface, not implemented)
+```
 
-### Authentication foundation ✅
-- Next.js 16 + TypeScript + Tailwind v4 + App Router
-- Full Postgres schema — 17 tables, 12 enums, RLS on all tables
-- Supabase Auth (email/password) via `@supabase/ssr`
-- Session middleware — refresh + protected route enforcement
-- Sign-up and sign-in forms with validation and error handling
-- Auth callback route (email confirmation + PKCE), logout route handler
-- Auth-aware app shell (header + sidebar show user + sign-out)
-- Login/signup redirect back to originally requested path
-- Profile creation (DB trigger + safe fallback)
-
-### Team workspace ✅
-- Real team creation form at `/teams/new` (sport, name, org, level, location, description)
-- Atomic team + owner creation via `create_team_with_owner` SECURITY DEFINER RPC
-- Creator automatically assigned `owner` role in `team_members`
-- `/teams` page lists all user teams with sport badges and role info
-- `/teams/[teamId]` team workspace with live roster count, membership check, and next-action CTAs
-- Team-aware sidebar navigation — shows team context when inside a team workspace
-- `/dashboard` shows user's teams, setup checklist, player counts, and recent reports placeholder
-- Slug generation for all new teams (`lib/utils/slug.ts`)
-- Full data access layer (`lib/db/teams.ts`) with typed functions and RLS enforcement
-
-### Roster management ✅
-- `/teams/[teamId]/players` — roster list with real-time search and filter (name, status, position)
-- `/teams/[teamId]/players/new` — add player form (staff only)
-- `/teams/[teamId]/players/[playerId]/edit` — edit player + archive/delete (staff only)
-- Player fields: name, jersey number, position, role, dominant side, class year, height, weight, status, notes
-- Archive (soft delete) with preserved history; permanent delete with confirmation (managers only)
-- Roster stats card (total, active, positions, missing jersey numbers)
-- Full data access layer (`lib/db/players.ts`) with typed functions and RLS enforcement
-- Role-based permission enforcement at application + RLS layers
-- `SetupChecklist` and `TeamCard` show live player counts from the database
-
-### Game and practice creation ✅
-- `/teams/[teamId]/games` — game list with search/filter (title, opponent, type, status) and summary stats
-- `/teams/[teamId]/games/new` — 4-section create form: Analysis Type, Opponent & Context, Score/Result, Notes for AI
-- `/teams/[teamId]/games/[gameId]` — game detail: metadata header, 4-step workflow card, setup checklist, opponent notes preview
-- `/teams/[teamId]/games/[gameId]/setup` — real setup checklist (game details, roster, video placeholder, timestamps placeholder, report placeholder)
-- `/teams/[teamId]/games/[gameId]/edit` — edit form + archive/delete with inline confirmation
-- Coach notes and opponent notes collected at creation time as AI context
-- Archive (soft delete) and permanent delete (manager only) with 2-click confirmation
-- Live game counts in team workspace progress card and next-steps section
-- Dashboard and setup checklist step 3 now live (reflects game creation status)
-- `getGameSetupStatus` checks all analysis prerequisites (video/timestamps are placeholders for Phase 7)
-
-### Video upload and asset management ✅
-- `VideoUploadCard` — client-side drag-and-drop or file picker with type/size validation
-- Direct browser-to-Supabase Storage upload (no server buffering — handles large files)
-- `game-videos` private bucket; signed URLs (1-hour TTL) for playback
-- `GameVideoPlayer` — native HTML5 player with loading/error states; future-ready for timestamp sync
-- `VideoAssetSummary` — filename, size, duration, upload date, status badge
-- Video status indicator per game in the games list (single batch query, no N+1)
-- Game setup checklist step 3 (Video upload) now live — links to video section on game detail
-- `lib/db/video-assets.ts` typed data access layer: CRUD + signed URL generation
-- `lib/storage/videos.ts` pure utilities: path building, sanitization, validation, duration extraction
-- `lib/actions/video.ts` server actions: save video record + best-effort storage cleanup on failure
-- Storage policies documented in `supabase/migrations/0003_storage_policies.sql`
-
-### Manual timestamps and event input ✅
-- `/teams/[teamId]/games/[gameId]/timestamps` — full film-tagging workspace
-- Video player with `seekTo` imperative ref — click any event to jump the video
-- "Add event at current time" prefills the form from video position
-- Event form: label, importance, event type (sport-specific suggestions + custom), team context, description, related players (multi-select from roster), opponent player names, tags
-- Event list: chronological, search/filter by label/type/importance/context/player
-- Event stats: total events, high-impact count, players tagged, event types
-- Timestamp parsing: accepts plain seconds (`83`), `MM:SS` (`1:23`), `H:MM:SS` (`1:02:15`)
-- Full CRUD: create, edit, delete with confirmation — staff only; players/viewers read-only
-- `lib/db/timestamps.ts` typed data access layer with RLS enforcement
-- `lib/actions/timestamps.ts` server actions with revalidation
-- `lib/utils/time.ts` timestamp formatting and parsing utilities
-- AI readiness badge: Not ready / Needs context / Ready / Strong evidence base
-- Setup checklist key moments step now live — links to timestamps page
-- Game detail page shows key moments stats (total, high impact, players, types)
-- 5+ events recommended for best AI report quality
-
-### Analysis job system and mock AI report generation ✅
-- `analysis_jobs` table: create, track, complete, and fail generation attempts
-- Input snapshot collected from DB (team, game, roster, video, all events) — stored verbatim on the job for reproducibility
-- Readiness check: not_ready / needs_context / ready / strong — gates generation appropriately
-- Mock AI generator: fully data-driven from real input (events, notes, players, sport)
-  - Executive summary from real game context
-  - Up to 5 coaching insights from event patterns, type clusters, tag clusters, coach notes
-  - Player reports for tagged roster players, referencing actual event labels + timestamps
-  - 3–5 practice recommendations with sport-specific drill names
-  - Opponent tendencies from opponent notes + opponent-context events
-  - Confidence levels (high/medium/low) based on evidence count
-  - Explicit assumptions + limitations on every report
-  - Evidence references with real event IDs for future DB linking
-- Report persistence: `game_reports`, `coaching_insights`, `player_reports`, `practice_recommendations`, `opponent_tendencies` all inserted
-- Report versioning: regenerating creates v2, v3, etc. — previous reports preserved with `is_current = false`
-- Report page: no-report / running / failed / report-exists states
-- `GenerateReportButton` client component — permission-aware, loading state, error handling
-- `AnalysisReadinessCard`, `AnalysisJobStatusCard`, `ReportPreviewCard` components
-- Setup checklist step 5 (AI Report) now live — links to report page
-- Game detail page shows report status and generate/view CTA
-- Provider-agnostic AI layer: `generateReport(snapshot)` → mock now, real LLM later
-- `lib/db/analysis-jobs.ts`, `lib/db/reports.ts`, `lib/analysis/` pipeline
-- `docs/ANALYSIS_JOBS.md` and `docs/MOCK_AI_REPORTS.md` created
-
-### Full game report dashboard ✅
-- `/teams/[teamId]/games/[gameId]/report` — polished multi-section report dashboard
-- `/teams/[teamId]/games/[gameId]/report/insights/[insightId]` — insight detail with video seeking
-- 4 report page states: no-report (with readiness card), running, failed, report-exists
-- **ReportHeader** — title, version badge, confidence badge, regenerate button, back nav
-- **ReportSectionNav** — sticky anchor nav (Overview / Insights / Players / Opponent / Practice / Evidence)
-- **ReportOverview** — executive summary + report basis (events, video, notes, roster)
-- **CoachingInsightsSection** — up to 5 insight cards with evidence type chips and detail links
-- **PlayerReportsSection** — expandable player cards with strengths, improvement areas, key moments
-- **OpponentTendenciesSection** — tendency cards with recommended responses
-- **PracticePlanSection** — numbered recommendation cards with drill names, timing, coaching points
-- **AssumptionsLimitationsCard** — full transparency section for trust
-- **InsightDetailView** (client) — two-column layout with video player + evidence seek
-- `EvidenceCard`, `EvidenceList`, `EvidenceTypeBadge` — evidence rendering components
-- Evidence resolution: `lib/analysis/evidence.ts` resolves `eventId` → event data, formats timestamps
-- Video seeking: clicking timestamp evidence calls `videoRef.current.seekTo(seconds)`
-- `getFullGameReportData()` — single parallel fetch for all report data
-- `getCoachingInsightById()` — for insight detail page
-- `getReportVersionsForGame()` — version history (display-only, selector coming in Prompt 11)
-- Report version badge — current vs. older version
-- Mock AI disclosure in report header (honest transparency)
-- `docs/REPORT_DASHBOARD.md` created
-
-### Coach verification and report editing ✅
-- Coaches can mark any AI output as accurate, partially accurate, or inaccurate
-- Optional feedback text and correction notes saved to `verification_feedback` (append-only audit trail)
-- Coaches can edit content on coaching insights, player reports, practice recommendations, opponent tendencies
-- Game report summary (title, executive summary, assumptions, limitations) is editable
-- Original AI output preserved in `original_ai_content` / `raw_ai_output` before first edit — never overwritten
-- Edited records show "Coach-edited" badge; verification status updated to "edited"
-- Verification history visible on insight detail page
-- Permission enforcement: only owner / coach / analyst can verify or edit; player and viewer are read-only
-- `lib/db/verification.ts`, `lib/db/report-editing.ts` data access layer
-- `VerificationControls`, `EditedBadge`, edit form modals per entity type
-- `docs/VERIFICATION_AND_EDITING.md` created
-
-### Shareable reports and role-aware access ✅
-- Owner/coach/analyst can create share links for any report
-- 4 visibility modes: private link, staff only, player specific, public summary
-- Secure cryptographic tokens (`giq_` prefix + 24 base64url chars, 144-bit entropy)
-- `/share/reports/[token]` — public shared route with clean branded layout, no team nav, no edit controls
-- Server-side sanitization via `lib/sharing/sanitize-report.ts` — data filtered before reaching browser
-- `player_specific` shows only the selected player's report + tagged practice recs
-- `public_summary` shows executive summary + insight titles only — no player data
-- `staff_only` requires authenticated team membership
-- Expiration date support — expired links show error, not report
-- Revocation with confirmation — revoked links show error immediately
-- View count + last viewed time tracked per link
-- Share modal in report dashboard with existing links list, copy button, revoke button
-- Active link count indicator on Share button
-- `lib/db/share-links.ts`, `lib/utils/tokens.ts`, `lib/sharing/sanitize-report.ts` created
-- `docs/SHARING_AND_ACCESS.md` created
-
-### Export-ready report view and browser PDF ✅
-- Owner/coach/analyst can click **Export** in the report header
-- `ExportReportModal` opens with section selector, instructions, and export history
-- 8 configurable sections: Overview, Coaching Insights, Player Reports, Opponent Tendencies, Practice Plan, Evidence, Assumptions & Limitations, Verification Status
-- `/teams/[teamId]/games/[gameId]/report/export` — clean print-ready page with no sidebar or app chrome
-- `PrintControls` component shows on screen with Print button (hidden in print via `@media print`)
-- Export page renders cover header, executive summary, all selected sections with confidence labels
-- Evidence displayed as formatted timestamps (MM:SS) with labels, descriptions, and player names
-- Assumptions & Limitations section preserves trust transparency in exported document
-- Browser print dialog → Save as PDF produces a clean, readable PDF
-- `exports` DB records created with `browser_pdf` type; status tracked as `processing` → `completed`
-- Export history shown in modal (5 most recent)
-- Players/viewers cannot access export — redirected from export route
-- `lib/db/exports.ts` data access layer; `lib/actions/exports.ts` server action
-- Print CSS in `app/globals.css`: `.no-print`, `.avoid-break`, `@page` margins
-- Export layout in `app/.../report/export/layout.tsx` (no sidebar, white background)
-- `docs/EXPORTS_AND_PRINTING.md` created documenting strategy, lifecycle, permissions, and future plans
-- Server-side PDF generation (Puppeteer/Playwright) and stored PDF downloads are planned for a future prompt
-
-### Real AI provider layer and strict JSON generation ✅
-- Provider-agnostic AI system: `mock | openai | anthropic | gemini`
-- **Mock provider** — retained and default; deterministic, data-driven, zero cost
-- **OpenAI provider** — fully implemented (`gpt-4o-mini` default); uses `response_format: json_object`
-- **Anthropic provider** — clean stub with setup instructions
-- **Gemini provider** — clean stub with setup instructions
-- Strict Zod schema validation for all AI output (`lib/ai/report-schema.ts`)
-- JSON extraction + validation pipeline handles code fences, preamble, malformed text
-- Hallucination guardrails: unknown player/event IDs stripped post-generation
-- Normalization ensures v1 limitation always present, priorities/sort orders assigned
-- System prompt: 14 hard rules — no invented IDs, no video frame claims, JSON-only, sport-specific guidance
-- User prompt: compact structured input with explicit allowed player/event ID lists
-- Cost control: `MAX_ANALYSIS_EVENTS=80`, `MAX_ANALYSIS_PLAYERS=40`, `MAX_NOTE_CHARS=6000`
-- Analysis job now stores provider + model + token usage + normalization warnings
-- `ReportHeader` and `GenerateReportButton` show current provider mode
-- Provider config UI note: "Reports generated from structured game data, notes, and tagged key moments"
-- `lib/ai/errors.ts` typed error classes for config, provider, schema, parse failures
-- `lib/analysis/normalize-generated-report.ts` normalization + ID validation
-- `lib/ai/generate-game-report.ts` high-level async entry point
-- `lib/ai/provider-factory.ts` environment-driven factory
-- `docs/REAL_AI_PROVIDER_LAYER.md` created documenting architecture, env vars, prompts, guardrails
-
-### Upcoming
-- **Prompt 15** — Product Polish, Demo Data, and End-to-End Founder Demo Flow
+**Key directories:**
+```
+app/            Next.js routes (pages, layouts, server actions)
+  teams/        Team, roster, game, timestamps, report routes
+  share/        Public shared report route
+  auth/         Auth pages and callbacks
+  demo/         Demo setup (guarded by feature flag)
+  admin/        Admin analytics and feedback (email-gated)
+components/     Reusable React components
+  ui/           Design system primitives (Button, Card, Badge, etc.)
+  layout/       App shell (sidebar, header, shell)
+  marketing/    Landing page sections
+lib/            Application logic and services
+  supabase/     Client setup (browser + server)
+  db/           Data access layer (one file per entity)
+  ai/           AI provider layer (mock + real providers)
+  analysis/     Analysis pipeline (snapshot, readiness, generate)
+  sharing/      Report sanitization by visibility mode
+types/          Shared TypeScript interfaces
+docs/           Project documentation (34 files)
+supabase/       Database migrations and storage policies
+```
 
 ---
 
-## Local Setup
+## AI System
+
+### Pipeline
+
+The AI pipeline runs entirely server-side:
+
+1. **Build input snapshot** — reads team, game, roster, events, and notes from the database into a typed `GenerateReportInput` object
+2. **Evaluate readiness** — scores event count, note quality, and roster completeness; shows as a badge before generation
+3. **Select provider** — dispatches to mock, OpenAI, Anthropic, or Gemini based on `AI_PROVIDER` env var
+4. **Generate strict JSON** — system prompt enforces 14 guardrail rules (no invented IDs, no video frame claims, evidence must reference real event IDs, JSON output only)
+5. **Validate schema** — Zod schema rejects any malformed or hallucinated output before storage
+6. **Normalize IDs** — all `evidence_ids` are validated against real `event_timestamps` rows
+7. **Persist report** — report version incremented, all rows inserted, analysis job marked complete
+8. **Render dashboard** — server component fetches all sections and renders the report
+9. **Coach verification** — coach marks, edits, and corrects outputs; all corrections stored in audit trail
+
+### Hallucination Prevention
+
+- System prompt explicitly forbids: inventing player names, fabricating timestamps, claiming to analyze video frames, referencing events not in the input
+- Zod validation rejects outputs that do not match the expected schema
+- ID normalization validates every evidence reference against real database rows
+- Original AI output is always preserved alongside any edits
+
+---
+
+## Trust and Safety Layer
+
+Every AI output in GameIQ shows:
+- **Evidence** — which tagged events support this claim
+- **Confidence** — High / Medium / Low with reasoning
+- **Assumptions** — what the AI assumed when data was incomplete
+- **Verification controls** — the coach can mark accurate, partially accurate, inaccurate, or edited
+
+Coach corrections are stored in an append-only `verification_feedback` table alongside the original AI text. This data is the foundation for future model evaluation and improvement.
+
+---
+
+## Database and Security
+
+**Schema:** 17 tables, 12 PostgreSQL enums, 10 versioned migrations
+
+**Key tables:** `profiles`, `teams`, `team_members`, `players`, `games`, `video_assets`, `event_timestamps`, `analysis_jobs`, `game_reports`, `coaching_insights`, `player_reports`, `practice_recommendations`, `opponent_tendencies`, `verification_feedback`, `share_links`, `exports`, `product_events`
+
+**Security:**
+- Row Level Security on every table — no exceptions
+- Team-scoped access: all data access validates team membership via `team_members` join
+- `create_team_with_owner` SECURITY DEFINER RPC prevents RLS race condition on team creation
+- Video served via server-generated signed URLs (1-hour TTL) — never exposed from bucket directly
+- AI provider keys are server-only — never sent to the browser
+- Share tokens use 144-bit entropy with `giq_` prefix; shared reports sanitized server-side by visibility mode
+- Admin routes gated by `ADMIN_EMAILS` env var
+
+See [`/docs/RLS_POLICIES.md`](docs/RLS_POLICIES.md) for the full RLS reference.
+
+---
+
+## Local Development
 
 ### Prerequisites
 
@@ -259,15 +225,50 @@ npm install
 cp .env.example .env.local
 ```
 
-For early development (mock AI, no Supabase required), add only:
+**Minimum (mock AI, no Supabase needed):**
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 AI_PROVIDER=mock
 ```
 
+**Full development (with Supabase):**
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+AI_PROVIDER=mock
+NEXT_PUBLIC_STORAGE_BUCKET=game-videos
+```
+
+**With real AI (OpenAI):**
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+NEXT_PUBLIC_ENABLE_REAL_AI=true
+```
+
+**With demo data:**
+```env
+NEXT_PUBLIC_ENABLE_MOCK_DATA=true
+```
+
 See [`/docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) for the full variable reference.
 
-### Run
+---
+
+## Supabase Setup
+
+1. Create a Supabase project
+2. Run migrations in order: `supabase/migrations/0001_*.sql` through `0010_*.sql`
+3. Create storage bucket: `game-videos` (private)
+4. Configure Auth redirect URLs in Supabase dashboard
+5. Copy project URL and keys to `.env.local`
+
+See [`/docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) for the full setup guide.
+
+---
+
+## Running the App
 
 ```bash
 npm run dev
@@ -275,67 +276,137 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
----
+### Scripts
 
-## Scripts
-
-| Script | Command | Description |
-|--------|---------|-------------|
-| Dev server | `npm run dev` | Start Next.js development server |
-| Build | `npm run build` | Production build |
-| Start | `npm run start` | Start production server |
-| Lint | `npm run lint` | Run ESLint |
-| Typecheck | `npm run typecheck` | Run `tsc --noEmit` |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run `tsc --noEmit` |
 
 ---
 
-## Folder Overview
+## Demo Data
 
-```
-app/            Next.js routes (pages, layouts, API routes)
-components/     Reusable React components
-  ui/           Design system primitives
-  layout/       App shell (sidebar, header, shell)
-  marketing/    Landing page sections
-  dashboard/    Dashboard widgets
-lib/            Application logic and services
-  supabase/     Supabase client setup
-  ai/           AI service layer (mock + future providers)
-  video/        Video processing types
-  utils/        Shared utilities (cn, format)
-  constants/    App-wide constants and navigation
-types/          Shared TypeScript types
-docs/           Project documentation
-public/         Static assets
-```
+With `NEXT_PUBLIC_ENABLE_MOCK_DATA=true`:
 
-See [`/docs/REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md) for the detailed guide.
+1. Sign in and visit `/demo/setup`
+2. Click **Create demo workspace**
+3. Redirected to the AI report in ~10 seconds
+
+Creates: Madison Cricket XI team, 10-player roster, Match vs Lakeside CC game, 12 tagged key moments, full AI coaching report.
+
+See [`/docs/DEMO_DATA.md`](docs/DEMO_DATA.md) for full details.
 
 ---
 
-## Documentation
+## Testing and QA
 
-| Document | Description |
-|----------|-------------|
-| [`PROJECT_CONSTITUTION.md`](docs/PROJECT_CONSTITUTION.md) | Product vision, users, workflow, trust principles |
-| [`BUILD_RULES.md`](docs/BUILD_RULES.md) | Engineering rules, naming conventions |
-| [`ROADMAP.md`](docs/ROADMAP.md) | Phased build plan |
-| [`AI_OUTPUT_PRINCIPLES.md`](docs/AI_OUTPUT_PRINCIPLES.md) | AI output rules and schemas |
-| [`DESIGN_PRINCIPLES.md`](docs/DESIGN_PRINCIPLES.md) | UI design system and component rules |
-| [`TECHNICAL_ARCHITECTURE.md`](docs/TECHNICAL_ARCHITECTURE.md) | Stack and architecture reference |
-| [`REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md) | Folder organization guide |
-| [`ENVIRONMENT.md`](docs/ENVIRONMENT.md) | Environment variable reference |
-| [`DATABASE_SCHEMA.md`](docs/DATABASE_SCHEMA.md) | Full schema reference — tables, enums, indexes, design decisions |
-| [`SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) | Supabase project setup, migrations, storage, auth |
-| [`RLS_POLICIES.md`](docs/RLS_POLICIES.md) | Row Level Security model, helper functions, per-table policies |
-| [`AUTHENTICATION.md`](docs/AUTHENTICATION.md) | Auth strategy, flows, protected routes, profile creation, security |
-| [`TEAM_WORKSPACES.md`](docs/TEAM_WORKSPACES.md) | Team workspace concept, creation flow, membership model, role model |
-| [`ROSTER_MANAGEMENT.md`](docs/ROSTER_MANAGEMENT.md) | Player data model, fields, permissions, archive vs delete, AI integration |
-| [`GAME_CREATION.md`](docs/GAME_CREATION.md) | Game/practice data model, setup checklist, permissions, future AI integration |
-| [`VIDEO_ASSETS.md`](docs/VIDEO_ASSETS.md) | Video upload architecture, storage paths, signed URL strategy, future processing roadmap |
-| [`TIMESTAMPS_AND_EVENTS.md`](docs/TIMESTAMPS_AND_EVENTS.md) | Manual timestamp feature, evidence layer, data model, video integration, AI readiness, roadmap |
-| [`ANALYSIS_JOBS.md`](docs/ANALYSIS_JOBS.md) | Analysis job lifecycle, input/output snapshots, versioning, permissions, transaction limitations |
-| [`MOCK_AI_REPORTS.md`](docs/MOCK_AI_REPORTS.md) | Mock AI generator design, confidence logic, evidence grounding, LLM integration roadmap |
-| [`REPORT_DASHBOARD.md`](docs/REPORT_DASHBOARD.md) | Report dashboard layout, insight detail, evidence linking, video seeking, permissions |
-| [`VERIFICATION_AND_EDITING.md`](docs/VERIFICATION_AND_EDITING.md) | Coach verification system, report editing, original AI content preservation, permissions |
-| [`SHARING_AND_ACCESS.md`](docs/SHARING_AND_ACCESS.md) | Share links, visibility modes, token strategy, sanitization, expiration, revocation, view tracking |
+No automated test suite is set up in v1. Quality gates:
+- TypeScript strict mode (`npm run typecheck`)
+- ESLint (`npm run lint`)
+- Production build (`npm run build`)
+
+Manual QA checklist: [`/docs/PRODUCT_QA_CHECKLIST.md`](docs/PRODUCT_QA_CHECKLIST.md)
+
+---
+
+## Deployment
+
+See [`/docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full Vercel + Supabase deployment guide.
+
+Quick summary:
+1. Create Supabase project → run 10 migrations → create storage bucket
+2. Configure Auth redirect URLs
+3. Set environment variables in Vercel
+4. Deploy from GitHub → verify auth, storage, AI, sharing, export
+
+---
+
+## Current Limitations
+
+**AI and analysis:**
+- No automated video frame analysis — AI reports are generated from structured inputs (notes, tagged events), not computer vision. This is intentional for v1.
+- No player or ball tracking
+- Anthropic and Gemini providers are stubs — only Mock and OpenAI are production-ready
+
+**Auth and access:**
+- Email/password only — no OAuth providers
+- No password reset flow (must use Supabase dashboard)
+- No team invitation workflow
+
+**Video:**
+- Video is not included in shared reports (only text content)
+- No server-side video processing (thumbnails, duration extraction)
+- Signed URLs expire after 1 hour
+
+**Export:**
+- Browser print-to-PDF only — no server-side PDF generation
+- Export history tracks metadata, not the actual PDF file
+
+**Analytics:**
+- Per-game analysis only — no season-level aggregation
+
+See [`/docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the complete, honest list.
+
+---
+
+## Roadmap
+
+### Near-Term
+- Coach pilot program (5–10 discovery interviews, 3 pilot teams)
+- Team member invitation workflow
+- Password reset / account recovery
+- Real AI provider testing with real game data
+- Server-side PDF generation
+
+### Technical
+- Background job queue for async AI generation
+- Automated test suite (Vitest + Playwright)
+- FFmpeg clip extraction around tagged timestamps
+- Season analytics and cross-game trend detection
+
+### Long-Term Vision
+- Computer vision — automated event detection from video frames
+- Player/ball tracking and formation analysis
+- Scouting and recruiting profiles
+- Player development history across seasons
+- Multi-sport modules with sport-specific AI prompt packs
+- Subscription billing and seat-based pricing
+
+See [`/docs/ROADMAP.md`](docs/ROADMAP.md) for the complete phased roadmap.
+
+---
+
+## For Reviewers
+
+If you want to understand the project quickly:
+
+1. Read [`/docs/PITCH_PRODUCT_ONE_PAGER.md`](docs/PITCH_PRODUCT_ONE_PAGER.md)
+2. Read [`/docs/TECHNICAL_BRIEF.md`](docs/TECHNICAL_BRIEF.md)
+3. Run the demo setup (`NEXT_PUBLIC_ENABLE_MOCK_DATA=true` → `/demo/setup`)
+4. Follow [`/docs/FOUNDER_DEMO_SCRIPT.md`](docs/FOUNDER_DEMO_SCRIPT.md)
+5. Review [`/docs/MVP_READINESS_REPORT.md`](docs/MVP_READINESS_REPORT.md)
+
+**Project handoff summary:** [`/docs/FINAL_PROJECT_HANDOFF.md`](docs/FINAL_PROJECT_HANDOFF.md)
+
+---
+
+## Documentation Index
+
+| Category | Documents |
+|----------|-----------|
+| **Product Strategy** | [Project Constitution](docs/PROJECT_CONSTITUTION.md) · [One-Pager](docs/PITCH_PRODUCT_ONE_PAGER.md) · [Investor Brief](docs/INVESTOR_ADVISOR_BRIEF.md) · [Landing Strategy](docs/LANDING_PAGE_STRATEGY.md) · [Demo Script](docs/FOUNDER_DEMO_SCRIPT.md) · [Coach Demo Guide](docs/COACH_DEMO_GUIDE.md) |
+| **Features** | [Team Workspaces](docs/TEAM_WORKSPACES.md) · [Roster](docs/ROSTER_MANAGEMENT.md) · [Games](docs/GAME_CREATION.md) · [Video](docs/VIDEO_ASSETS.md) · [Timestamps](docs/TIMESTAMPS_AND_EVENTS.md) · [Reports](docs/REPORT_DASHBOARD.md) · [Verification](docs/VERIFICATION_AND_EDITING.md) · [Sharing](docs/SHARING_AND_ACCESS.md) · [Export](docs/EXPORTS_AND_PRINTING.md) |
+| **AI and Trust** | [AI Principles](docs/AI_OUTPUT_PRINCIPLES.md) · [Mock AI](docs/MOCK_AI_REPORTS.md) · [Real AI Layer](docs/REAL_AI_PROVIDER_LAYER.md) · [Analysis Jobs](docs/ANALYSIS_JOBS.md) |
+| **Engineering** | [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md) · [Technical Brief](docs/TECHNICAL_BRIEF.md) · [Database Schema](docs/DATABASE_SCHEMA.md) · [RLS Policies](docs/RLS_POLICIES.md) · [Supabase Setup](docs/SUPABASE_SETUP.md) · [Deployment](docs/DEPLOYMENT.md) · [Environment](docs/ENVIRONMENT.md) |
+| **Demo and QA** | [Demo Data](docs/DEMO_DATA.md) · [QA Checklist](docs/PRODUCT_QA_CHECKLIST.md) · [MVP Readiness](docs/MVP_READINESS_REPORT.md) · [Known Limitations](docs/KNOWN_LIMITATIONS.md) · [Screenshots Plan](docs/SCREENSHOTS_AND_DEMO_MEDIA_PLAN.md) |
+| **User Research** | [First User Feedback](docs/FIRST_USER_FEEDBACK.md) · [Coach Discovery](docs/COACH_DISCOVERY_GUIDE.md) · [Product Analytics](docs/PRODUCT_ANALYTICS.md) |
+| **Portfolio** | [Portfolio Summary](docs/PORTFOLIO_SUMMARY.md) · [Pitch Lines](docs/PITCH_LINES.md) |
+| **Pilot Planning** | [Final Handoff](docs/FINAL_PROJECT_HANDOFF.md) · [Technical Debt](docs/TECHNICAL_DEBT.md) · [Issues Backlog](docs/PRIORITIZED_ISSUES.md) · [Pilot Readiness](docs/PILOT_READINESS_CHECKLIST.md) · [Coach Pilot Plan](docs/COACH_PILOT_PLAN.md) · [30-Day Plan](docs/30_DAY_FOUNDER_PLAN.md) · [Go/No-Go](docs/GO_NO_GO_CRITERIA.md) |
+| **Engineering Roadmap** | [v1.1 Engineering](docs/V1_1_ENGINEERING_ROADMAP.md) · [v1.2 Product](docs/V1_2_PRODUCT_ROADMAP.md) · [CV Roadmap](docs/COMPUTER_VISION_ROADMAP.md) |
+| **Risk and Quality** | [Product Risk Register](docs/PRODUCT_RISK_REGISTER.md) · [Report Quality Evaluation](docs/REPORT_QUALITY_EVALUATION.md) · [Data Privacy Review](docs/DATA_PRIVACY_REVIEW.md) |
+
+Full documentation index: [`/docs/README.md`](docs/README.md)

@@ -1,6 +1,8 @@
 "use server";
 
 import { createExportRecord, markExportCompleted, markExportFailed } from "@/lib/db/exports";
+import { getServerUser } from "@/lib/supabase/server";
+import { trackReportExportOpened } from "@/lib/analytics/track";
 import type { CreateExportInput, ExportRecord, ExportSectionOptions } from "@/types/export";
 
 export interface CreateExportActionResult {
@@ -33,6 +35,16 @@ export async function createBrowserExportAction(
       exportMode: "browser_pdf",
       completedAt: new Date().toISOString(),
     });
+
+    const user = await getServerUser();
+    const sectionCount = Object.values(sections).filter(Boolean).length;
+    void trackReportExportOpened(
+      user?.id ?? "",
+      input.teamId,
+      input.gameId,
+      input.gameReportId,
+      { sectionCount }
+    );
 
     return { exportRecord: { ...record, status: "completed" }, error: null };
   } catch (err) {

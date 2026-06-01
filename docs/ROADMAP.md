@@ -252,6 +252,40 @@ Acceptance criteria:
 
 ---
 
+## Phase 8 — Final QA, Security, and Deployment Readiness ✅
+
+**Goal:** Harden the MVP for real coach demos and early pilots.
+
+Deliverables (complete):
+- `proxy.ts` auth enforcement middleware
+- RLS review across all 17 tables
+- Share link security (entropy, expiry, revocation, sanitization)
+- `/docs/PRODUCT_QA_CHECKLIST.md` — 20-flow manual QA checklist
+- `/docs/DEPLOYMENT.md` — Vercel + Supabase deployment guide
+- `/docs/KNOWN_LIMITATIONS.md` — honest v1 scope documentation
+- `/docs/MVP_READINESS_REPORT.md` — feature status and go/no-go assessment
+- `npm run typecheck`, `npm run lint`, `npm run build` all pass clean
+
+---
+
+## Phase 9 — Investor/Coach Demo Landing and First-User Feedback Loop ✅
+
+**Goal:** Make GameIQ pitch-ready and user-research-ready for coaches, advisors, and investors.
+
+Deliverables (complete):
+- Polished 7-section landing page (`/`) with honest MVP positioning
+- `/demo` — demo explanation page with what's included and what to look for
+- `/request-access` — early interest form (name, email, role, sport, pain point, tools)
+- `/feedback` — product feedback form (1–5 rating, most valuable, WTP research)
+- `/privacy` — MVP privacy notice
+- `/admin/feedback` — founder-only admin review (gated by `ADMIN_EMAILS` env var)
+- `supabase/migrations/0009_feedback_tables.sql` — `access_requests` and `product_feedback` tables with RLS
+- `lib/db/feedback.ts` — typed data access for insert and admin read
+- Feedback CTA links in dashboard footer and shared report footer
+- 3 new docs: `FIRST_USER_FEEDBACK.md`, `LANDING_PAGE_STRATEGY.md`, `COACH_DISCOVERY_GUIDE.md`
+
+---
+
 ## Future — Post-MVP Expansion
 
 These are intentional future capabilities. Architecture must not block them, but they are not to be built until explicitly requested.
@@ -305,3 +339,74 @@ These are intentional future capabilities. Architecture must not block them, but
 - Multi-organization enterprise accounts
 - API access for partners
 - Marketplace for sport-specific modules
+
+---
+
+## Summary: Built vs. What Is Next
+
+### Built in MVP (Complete as of Phase 10)
+
+| Feature | Status |
+|---------|--------|
+| Supabase Auth (email/password, PKCE, session middleware) | ✅ |
+| Team workspaces with role-based access | ✅ |
+| Roster management (CRUD, archive, search, filter) | ✅ |
+| Game/practice creation with 4-section metadata form | ✅ |
+| Video upload to private Supabase Storage + signed URL playback | ✅ |
+| Manual timestamp tagging workspace (12 event fields) | ✅ |
+| AI readiness scoring badge | ✅ |
+| AI report generation — mock provider (deterministic, evidence-linked) | ✅ |
+| AI report generation — OpenAI GPT-4o-mini (production-ready) | ✅ |
+| Strict Zod validation on all AI JSON outputs | ✅ |
+| 14 AI guardrail rules in system prompt | ✅ |
+| Full report dashboard (insights, players, opponent, practice, evidence) | ✅ |
+| Insight detail pages with video seek to timestamp | ✅ |
+| Coach verification (4 states: accurate/partial/inaccurate/edited) | ✅ |
+| Inline editing with append-only audit trail | ✅ |
+| 4-mode shareable reports with 144-bit entropy tokens | ✅ |
+| Server-side report sanitization by visibility mode | ✅ |
+| Export-ready print/PDF view with section selector | ✅ |
+| Founder analytics (13 instrumented events, admin dashboard) | ✅ |
+| Landing page with 7 sections | ✅ |
+| Demo experience page | ✅ |
+| Request-access form | ✅ |
+| Product feedback form | ✅ |
+| Admin feedback/analytics review | ✅ |
+| Demo workspace (cricket team, game, 12 timestamps, AI report) | ✅ |
+
+### Near-Term Next (Product / Validation)
+
+- 5–10 structured coach discovery interviews
+- 3 pilot teams complete a real game upload and report review
+- Report quality evaluation against coach expectations
+- Team member invitation workflow (in-app, email-based)
+- Password reset / account recovery flow
+- Better onboarding (empty state guidance, guided first-game flow)
+- Richer player-specific share link (player receives only their section)
+- Real AI provider testing with real coach game data
+- First usability fixes from coach interview findings
+- OAuth sign-in (Google) for lower-friction registration
+
+### Technical Next
+
+- Background job queue for async AI generation (BullMQ or similar)
+- Automated test suite (Vitest unit tests, Playwright E2E)
+- FFmpeg clip extraction around tagged timestamps
+- Server-side PDF generation (Puppeteer/Playwright) with automatic storage
+- Storage policy hardening (per-team quotas, upload size limits)
+- AI evaluation harness (auto-score outputs vs. coach verification data)
+- Supabase Realtime subscription for real-time analysis job status
+- Season analytics — cross-game aggregation and trend detection
+
+### Long-Term Vision
+
+- Computer vision microservice — automated event detection from video frames
+- Player/ball tracking and formation analysis
+- Pose estimation and biomechanics
+- Scouting and recruiting profiles
+- Player development history across seasons
+- Wearable/load monitoring integrations
+- Multi-sport modules with sport-specific AI prompt packs
+- Subscription billing and seat-based pricing
+- Native mobile app (iOS/Android) for sideline tagging
+- Highlight generation and social media export formats

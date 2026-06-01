@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createGameForTeam } from "@/lib/db/games";
+import { getServerUser } from "@/lib/supabase/server";
+import { trackGameCreated } from "@/lib/analytics/track";
 import type { SportType, GameType, HomeAwayStatus } from "@/types/sports";
 
 const ALLOWED_SPORTS: SportType[] = [
@@ -112,6 +114,7 @@ export async function createGameAction(
 
   if (Object.keys(errors).length > 0) return { errors };
 
+  const user = await getServerUser();
   let gameId: string;
   try {
     const game = await createGameForTeam({
@@ -136,6 +139,8 @@ export async function createGameAction(
     const message = err instanceof Error ? err.message : "An unexpected error occurred.";
     return { errors: { form: message } };
   }
+
+  void trackGameCreated(user?.id ?? "", teamId, gameId, { sport, gameType });
 
   redirect(`/teams/${teamId}/games/${gameId}`);
 }

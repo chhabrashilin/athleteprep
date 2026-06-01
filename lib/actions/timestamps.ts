@@ -6,6 +6,8 @@ import {
   updateEventTimestampForGame,
   deleteEventTimestampForGame,
 } from "@/lib/db/timestamps";
+import { getServerUser } from "@/lib/supabase/server";
+import { trackTimestampCreated } from "@/lib/analytics/track";
 import type { CreateEventTimestampInput, UpdateEventTimestampInput } from "@/lib/db/timestamps";
 
 function timestampsPath(teamId: string, gameId: string) {
@@ -24,6 +26,8 @@ export async function createEventTimestampAction(
     revalidatePath(timestampsPath(input.teamId, input.gameId));
     revalidatePath(gamePath(input.teamId, input.gameId));
     revalidatePath(`/teams/${input.teamId}/games/${input.gameId}/setup`);
+    const user = await getServerUser();
+    void trackTimestampCreated(user?.id ?? "", input.teamId, input.gameId);
     return {};
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to create event." };

@@ -743,7 +743,7 @@ export default async function ExportReportPage({
         <div className="mt-10 pt-4 border-t border-slate-200 text-center">
           <p className="text-xs text-slate-400">
             Generated with <strong className="text-slate-500">GameIQ</strong> — AI game review for serious teams. ·{" "}
-            {report.aiGenerated ? "Mock AI mode (development)" : "AI-generated"} ·{" "}
+            AI-generated report ·{" "}
             Report v{report.reportVersion}
           </p>
         </div>

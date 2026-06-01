@@ -10,10 +10,9 @@ import {
   Users,
   Film,
   BarChart3,
-  Zap,
+  Share2,
   ArrowRight,
   Plus,
-  Lock,
 } from "lucide-react";
 import {
   getTeamByIdForCurrentUser,
@@ -21,6 +20,7 @@ import {
 } from "@/lib/db/teams";
 import { getTeamPlayerCount } from "@/lib/db/players";
 import { getTeamGameCount } from "@/lib/db/games";
+import { getTeamReportCount } from "@/lib/db/reports";
 
 export const metadata: Metadata = { title: "Team Workspace — GameIQ" };
 
@@ -33,11 +33,12 @@ export default async function TeamPage({
 }) {
   const { teamId } = await params;
 
-  const [team, membership, playerCount, gameCount] = await Promise.all([
+  const [team, membership, playerCount, gameCount, reportCount] = await Promise.all([
     getTeamByIdForCurrentUser(teamId),
     getCurrentUserTeamMembership(teamId),
     getTeamPlayerCount(teamId),
     getTeamGameCount(teamId),
+    getTeamReportCount(teamId),
   ]);
 
   if (!team || !membership) notFound();
@@ -122,46 +123,58 @@ export default async function TeamPage({
           </CardContent>
         </Card>
 
-        {/* Reports — coming soon */}
+        {/* Reports card — live */}
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
               <BarChart3 className="h-5 w-5 text-sky-400" />
-              Reports
+              AI Reports
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-2">
-            <p className="text-2xl font-bold text-slate-100">0</p>
+            <p className="text-2xl font-bold text-slate-100">{reportCount}</p>
             <p className="text-xs text-slate-500 mt-1 flex-1">
-              AI-generated game analysis.
+              {reportCount === 0
+                ? "No reports generated yet."
+                : `${reportCount} report${reportCount !== 1 ? "s" : ""} generated · coaching insights, player feedback.`}
             </p>
             <div className="mt-4">
-              <Button variant="ghost" size="sm" className="px-0 text-slate-500 cursor-default" disabled>
-                <Lock className="h-3 w-3 mr-1" />
-                Coming soon
-              </Button>
+              <Link href={`/teams/${teamId}/games`}>
+                <Button variant="ghost" size="sm" className="px-0">
+                  {reportCount > 0 ? "View reports" : "Generate a report"}
+                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* AI Analysis — coming soon */}
+        {/* Sharing card — live */}
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Zap className="h-5 w-5 text-sky-400" />
-              AI Analysis
+              <Share2 className="h-5 w-5 text-sky-400" />
+              Sharing
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-2">
-            <p className="text-2xl font-bold text-slate-100">—</p>
+            <p className="text-2xl font-bold text-slate-100">
+              {reportCount > 0 ? "On" : "—"}
+            </p>
             <p className="text-xs text-slate-500 mt-1 flex-1">
-              Coaching insights, player feedback, recommendations.
+              Share reports with players, parents, or coaches via secure link.
             </p>
             <div className="mt-4">
-              <Button variant="ghost" size="sm" className="px-0 text-slate-500 cursor-default" disabled>
-                <Lock className="h-3 w-3 mr-1" />
-                Coming soon
-              </Button>
+              {reportCount > 0 ? (
+                <Link href={`/teams/${teamId}/games`}>
+                  <Button variant="ghost" size="sm" className="px-0">
+                    Share a report
+                    <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </Link>
+              ) : (
+                <p className="text-xs text-slate-600">Generate a report first</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -222,8 +235,10 @@ export default async function TeamPage({
       <div className="mt-4 rounded-xl border border-sky-500/20 bg-sky-500/5 p-5">
         <p className="text-sm text-sky-400 font-medium mb-1">Your team intelligence hub</p>
         <p className="text-sm text-slate-400">
-          This workspace will become the hub for {team.name}&apos;s film library,
-          player roster, game analysis, and AI-generated coaching reports.
+          {team.name}&apos;s workspace for film review, roster management, AI-generated coaching reports, player feedback, and practice planning.
+          {reportCount === 0
+            ? " Create a game, tag key moments, and generate your first AI report to get started."
+            : " Generate reports, verify insights, and share with your team."}
         </p>
       </div>
     </AppShell>

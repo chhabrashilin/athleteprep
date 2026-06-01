@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createTeamForCurrentUser } from "@/lib/db/teams";
+import { getServerUser } from "@/lib/supabase/server";
+import { trackTeamCreated } from "@/lib/analytics/track";
 import type { SportType } from "@/types/sports";
 
 const ALLOWED_SPORTS: SportType[] = [
@@ -80,6 +82,7 @@ export async function createTeamAction(
   }
 
   // --- Create team ---
+  const user = await getServerUser();
   let teamId: string;
   try {
     teamId = await createTeamForCurrentUser({
@@ -95,6 +98,8 @@ export async function createTeamAction(
       err instanceof Error ? err.message : "An unexpected error occurred.";
     return { errors: { form: message } };
   }
+
+  void trackTeamCreated(user?.id ?? "", teamId, { sport });
 
   redirect(`/teams/${teamId}`);
 }

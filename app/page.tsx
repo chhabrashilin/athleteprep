@@ -1,36 +1,18 @@
 import Link from "next/link";
-import { HeroSection } from "@/components/marketing/HeroSection";
-import { FeatureGrid } from "@/components/marketing/FeatureGrid";
+import { Zap, ArrowRight, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Upload, Tag, FileText, Zap, ArrowRight } from "lucide-react";
+import { LandingHero } from "@/components/landing/LandingHero";
+import { ProblemSection } from "@/components/landing/ProblemSection";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { ReportFeaturesSection } from "@/components/landing/ReportFeaturesSection";
+import { TrustSection } from "@/components/landing/TrustSection";
+import { MvpHonestySection } from "@/components/landing/MvpHonestySection";
+import { DemoCTASection } from "@/components/landing/DemoCTASection";
 import { getServerUser } from "@/lib/supabase/server";
-
-const WORKFLOW_STEPS = [
-  {
-    step: "01",
-    icon: <Upload className="h-6 w-6" />,
-    title: "Upload game film",
-    description:
-      "Upload your match or practice video. Add metadata — sport, date, opponent, score, venue, and competition context.",
-  },
-  {
-    step: "02",
-    icon: <Tag className="h-6 w-6" />,
-    title: "Add context and key moments",
-    description:
-      "Tag key events with timestamps and player involvement. Add coach observations and opponent notes. The more you add, the better the analysis.",
-  },
-  {
-    step: "03",
-    icon: <FileText className="h-6 w-6" />,
-    title: "Generate your report",
-    description:
-      "AI analyzes your inputs and generates coaching insights, player reports, and practice recommendations — each with evidence and confidence scores.",
-  },
-];
 
 export default async function LandingPage() {
   const user = await getServerUser();
+  const isAuthenticated = !!user;
 
   return (
     <div className="min-h-full bg-slate-950">
@@ -45,10 +27,13 @@ export default async function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            {user ? (
+            <Link href="/demo">
+              <Button variant="ghost" size="sm">Demo</Button>
+            </Link>
+            {isAuthenticated ? (
               <Link href="/dashboard">
                 <Button size="sm">
-                  Go to dashboard
+                  Dashboard
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
@@ -57,9 +42,9 @@ export default async function LandingPage() {
                 <Link href="/auth/login">
                   <Button variant="ghost" size="sm">Sign in</Button>
                 </Link>
-                <Link href="/auth/signup">
+                <Link href="/request-access">
                   <Button size="sm">
-                    Get started
+                    Request Access
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </Link>
@@ -70,84 +55,63 @@ export default async function LandingPage() {
       </nav>
 
       <main className="pt-16">
-        {/* Hero */}
-        <HeroSection />
+        <LandingHero isAuthenticated={isAuthenticated} />
 
         <div className="mx-auto max-w-5xl border-t border-slate-800/60 px-6" />
-
-        {/* How it works */}
-        <section className="px-6 py-20">
-          <div className="mx-auto max-w-5xl">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-100">
-                From upload to insights in three steps
-              </h2>
-              <p className="mt-3 text-slate-400">
-                No complex setup. No manual report building. Just structured analysis your team can act on.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {WORKFLOW_STEPS.map((step) => (
-                <div key={step.step} className="rounded-xl border border-slate-800 bg-slate-900 p-6 h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400">
-                      {step.icon}
-                    </div>
-                    <span className="text-3xl font-bold text-slate-800">{step.step}</span>
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-100 mb-2">{step.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ProblemSection />
 
         <div className="mx-auto max-w-5xl border-t border-slate-800/60 px-6" />
-
-        {/* Feature grid */}
-        <FeatureGrid />
+        <HowItWorksSection />
 
         <div className="mx-auto max-w-5xl border-t border-slate-800/60 px-6" />
+        <ReportFeaturesSection />
 
-        {/* CTA */}
-        <section className="px-6 py-24 text-center">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight text-slate-100">
-              Ready to cut film review time in half?
-            </h2>
-            <p className="mt-4 text-lg text-slate-400">
-              GameIQ is built for coaches who want better insights, not more dashboards.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/auth/signup">
-                <Button size="lg">
-                  Start for free
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button variant="outline" size="lg">
-                  Explore the dashboard
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
+        <div className="mx-auto max-w-5xl border-t border-slate-800/60 px-6" />
+        <TrustSection />
+
+        <div className="mx-auto max-w-5xl border-t border-slate-800/60 px-6" />
+        <MvpHonestySection />
+
+        <div className="mx-auto max-w-5xl border-t border-slate-800/60 px-6" />
+        <DemoCTASection isAuthenticated={isAuthenticated} />
 
         {/* Footer */}
-        <footer className="border-t border-slate-800 px-6 py-8">
-          <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-sky-500">
-                <Zap className="h-3 w-3 text-white" />
+        <footer className="border-t border-slate-800 px-6 py-10">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded bg-sky-500">
+                    <Zap className="h-3 w-3 text-white" />
+                  </div>
+                  <span className="text-sm font-bold text-slate-200">GameIQ</span>
+                </div>
+                <p className="text-xs text-slate-500 max-w-xs">
+                  AI game review for serious teams. Turn film into coach-ready intelligence.
+                </p>
               </div>
-              <span className="text-sm font-semibold text-slate-300">GameIQ</span>
+
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
+                <Link href="/auth/login" className="hover:text-slate-300 transition-colors">Login</Link>
+                <Link href="/request-access" className="hover:text-slate-300 transition-colors">Request Access</Link>
+                <Link href="/demo" className="hover:text-slate-300 transition-colors">Demo</Link>
+                <Link href="/feedback" className="hover:text-slate-300 transition-colors">Feedback</Link>
+                <Link href="/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
+              </div>
             </div>
-            <p className="text-xs text-slate-600">
-              © {new Date().getFullYear()} GameIQ. AI game review for serious teams.
-            </p>
+
+            <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-slate-800/60 pt-6 sm:flex-row sm:items-center">
+              <p className="text-xs text-slate-600">
+                © {new Date().getFullYear()} GameIQ. MVP — early access.
+              </p>
+              <Link
+                href="/feedback"
+                className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors"
+              >
+                <MessageSquare className="h-3 w-3" />
+                Have feedback on GameIQ?
+              </Link>
+            </div>
           </div>
         </footer>
       </main>

@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createPlayerForTeam } from "@/lib/db/players";
+import { getServerUser } from "@/lib/supabase/server";
+import { trackPlayerCreated } from "@/lib/analytics/track";
 import type { PlayerStatus } from "@/types/database";
 
 const ALLOWED_STATUSES: PlayerStatus[] = [
@@ -91,6 +93,7 @@ export async function createPlayerAction(
 
   if (Object.keys(errors).length > 0) return { errors };
 
+  const user = await getServerUser();
   try {
     await createPlayerForTeam({
       teamId,
@@ -112,6 +115,8 @@ export async function createPlayerAction(
       err instanceof Error ? err.message : "An unexpected error occurred.";
     return { errors: { form: message } };
   }
+
+  void trackPlayerCreated(user?.id ?? "", teamId);
 
   redirect(`/teams/${teamId}/players`);
 }

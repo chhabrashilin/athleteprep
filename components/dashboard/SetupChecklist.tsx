@@ -7,7 +7,6 @@ interface ChecklistItem {
   description: string;
   completed: boolean;
   href?: string;
-  comingSoon?: boolean;
 }
 
 interface SetupChecklistProps {
@@ -27,43 +26,47 @@ export function SetupChecklist({ hasTeam, hasPlayers = false, hasGames = false, 
     },
     {
       label: "Add roster",
-      description: "Add your players so they can be tagged in reports.",
+      description: "Add players so they can be tagged in AI reports.",
       completed: hasPlayers,
       href: hasTeam && !hasPlayers && firstTeamId
         ? `/teams/${firstTeamId}/players/new`
         : hasTeam && firstTeamId
         ? `/teams/${firstTeamId}/players`
         : undefined,
-      comingSoon: !hasTeam,
     },
     {
-      label: "Create first game",
-      description: "Log a match or practice session.",
+      label: "Create a game",
+      description: "Log a match or practice session for review.",
       completed: hasGames,
       href: hasTeam && !hasGames && firstTeamId
         ? `/teams/${firstTeamId}/games/new`
         : hasTeam && firstTeamId
         ? `/teams/${firstTeamId}/games`
         : undefined,
-      comingSoon: !hasTeam || !hasPlayers,
     },
     {
-      label: "Upload video",
-      description: "Attach game film so the AI can reference clips.",
+      label: "Upload game film",
+      description: "Attach video so the AI can reference timestamps.",
       completed: false,
-      comingSoon: true,
+      href: hasGames && firstTeamId
+        ? `/teams/${firstTeamId}/games`
+        : undefined,
     },
     {
-      label: "Add timestamps",
-      description: "Tag key events in the video with notes.",
+      label: "Tag key moments",
+      description: "Add 5–10 timestamps to build evidence for AI insights.",
       completed: false,
-      comingSoon: true,
+      href: hasGames && firstTeamId
+        ? `/teams/${firstTeamId}/games`
+        : undefined,
     },
     {
       label: "Generate AI report",
       description: "Get coaching insights, player reports, and recommendations.",
       completed: false,
-      comingSoon: true,
+      href: hasGames && firstTeamId
+        ? `/teams/${firstTeamId}/games`
+        : undefined,
     },
   ];
 
@@ -111,16 +114,13 @@ export function SetupChecklist({ hasTeam, hasPlayers = false, hasGames = false, 
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
               </div>
-              {item.comingSoon && (
-                <span className="shrink-0 text-xs text-slate-600">Soon</span>
-              )}
-              {!item.completed && !item.comingSoon && item.href && (
+              {!item.completed && item.href && (
                 <ChevronRight className="h-4 w-4 text-slate-500 shrink-0 mt-0.5" />
               )}
             </div>
           );
 
-          if (!item.completed && !item.comingSoon && item.href) {
+          if (!item.completed && item.href) {
             return (
               <li key={i}>
                 <Link

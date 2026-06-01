@@ -11,6 +11,14 @@ import {
   updateGameReportSummary,
 } from "@/lib/db/report-editing";
 import { createShareLink, revokeShareLink } from "@/lib/db/share-links";
+import { getServerUser } from "@/lib/supabase/server";
+import {
+  trackAnalysisCompleted,
+  trackAnalysisFailed,
+  trackInsightVerified,
+  trackInsightEdited,
+  trackShareLinkCreated,
+} from "@/lib/analytics/track";
 import type { GenerateReportResult, GenerateReportError } from "@/types/analysis";
 import type {
   SubmitVerificationFeedbackInput,
@@ -31,6 +39,7 @@ export async function generateReportAction(
   teamId: string,
   gameId: string
 ): Promise<GenerateReportResult | GenerateReportError> {
+  const user = await getServerUser();
   const result = await generateReportForGame(teamId, gameId);
 
   if (result.success) {
@@ -38,6 +47,22 @@ export async function generateReportAction(
     revalidatePath(`/teams/${teamId}/games/${gameId}/setup`);
     revalidatePath(`/teams/${teamId}/games/${gameId}`);
     revalidatePath(`/teams/${teamId}/games`);
+    void trackAnalysisCompleted(
+      user?.id ?? "",
+      teamId,
+      gameId,
+      (result as GenerateReportResult).reportId,
+      {
+        provider: process.env.AI_PROVIDER ?? "mock",
+        confidence: "medium",
+        version: (result as GenerateReportResult).version ?? 1,
+      }
+    );
+  } else {
+    void trackAnalysisFailed(user?.id ?? "", teamId, gameId, {
+      provider: "unknown",
+      reason: (result as GenerateReportError).error ?? "unknown",
+    });
   }
 
   return result;
@@ -56,6 +81,11 @@ export async function verifyReportItemAction(
     revalidatePath(
       `/teams/${input.teamId}/games/${input.gameId ?? ""}/report/insights/${input.targetId}`
     );
+    const user = await getServerUser();
+    void trackInsightVerified(user?.id ?? "", input.teamId, input.gameId ?? "", {
+      status: input.verificationStatus,
+      targetType: input.targetType,
+    });
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Verification failed.";
@@ -76,6 +106,8 @@ export async function updateCoachingInsightAction(
     revalidatePath(
       `/teams/${input.teamId}/games/${input.gameId}/report/insights/${input.insightId}`
     );
+    const user = await getServerUser();
+    void trackInsightEdited(user?.id ?? "", input.teamId, input.gameId, { targetType: "coaching_insight" });
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save insight.";
@@ -146,6 +178,14 @@ export async function createShareLinkAction(
   try {
     const link = await createShareLink(input);
     revalidatePath(`/teams/${input.teamId}/games/${input.gameId}/report`);
+    const user = await getServerUser();
+    void trackShareLinkCreated(
+      user?.id ?? "",
+      input.teamId,
+      input.gameId,
+      input.gameReportId,
+      { visibility: input.visibility }
+    );
     return { success: true, data: link };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create share link.";

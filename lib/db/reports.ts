@@ -840,6 +840,68 @@ export async function getFullGameReportData(
   };
 }
 
+export interface RecentReportSummary {
+  reportId: string;
+  gameId: string;
+  teamId: string;
+  title: string;
+  overallConfidence: ConfidenceLevel;
+  reportVersion: number;
+  createdAt: string;
+}
+
+/**
+ * Returns the most recent current reports across a set of teams.
+ * Used to populate the dashboard recent-reports panel.
+ */
+export async function getRecentReportsForTeams(
+  teamIds: string[],
+  limit = 5
+): Promise<RecentReportSummary[]> {
+  if (teamIds.length === 0) return [];
+
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("game_reports")
+    .select("id, game_id, team_id, title, overall_confidence, report_version, created_at")
+    .in("team_id", teamIds)
+    .eq("is_current", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    reportId: row.id as string,
+    gameId: row.game_id as string,
+    teamId: row.team_id as string,
+    title: row.title as string,
+    overallConfidence: (row.overall_confidence as ConfidenceLevel) ?? "medium",
+    reportVersion: (row.report_version as number) ?? 1,
+    createdAt: row.created_at as string,
+  }));
+}
+
+/**
+ * Returns the count of current (non-archived) game reports for a team.
+ * Used to populate the Reports card on the team workspace page.
+ */
+export async function getTeamReportCount(teamId: string): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return 0;
+
+  const { count, error } = await supabase
+    .from("game_reports")
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", teamId)
+    .eq("is_current", true);
+
+  if (error) return 0;
+  return count ?? 0;
+}
+
 // ---------------------------------------------------------------------------
 // Kept for backward compatibility with old stubs imported elsewhere
 // ---------------------------------------------------------------------------
