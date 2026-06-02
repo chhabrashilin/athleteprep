@@ -3,8 +3,8 @@
 > An honest audit of the technical debt accumulated during the 10-phase MVP build. Items are classified by category and severity. Use this document to prioritize engineering work before and during the first coach pilot.
 
 **Date:** June 2026  
-**Codebase state:** Post-Prompt 19 (pitch/portfolio polish complete)  
-**Build status:** typecheck ✅ lint ✅ build ✅
+**Codebase state:** Post-Prompt 21 (automated test suite and CI foundation)  
+**Build status:** typecheck ✅ lint ✅ build ✅ tests ✅ (131 passing)
 
 ---
 
@@ -97,13 +97,10 @@
 
 ---
 
-### D3 — No database-level unique constraint on share tokens
+### D3 — No database-level unique constraint on share tokens ✅ RESOLVED — Prompt 25
 **Category:** Database  
-**Severity:** P1  
-**Impact:** `share_links.token` should have a `UNIQUE` constraint at the database level. Currently uniqueness is enforced only at the application layer (entropy + check). A race condition between two concurrent share link creations could theoretically produce a collision (astronomically unlikely with 144-bit entropy, but the constraint provides defense in depth).  
-**Fix:** Add `ALTER TABLE share_links ADD CONSTRAINT share_links_token_key UNIQUE (token);` in a new migration.  
-**Effort:** S  
-**Blocks pilot:** Technically no, but should be fixed
+**Severity:** P1 → ✅ RESOLVED  
+**Resolution:** Migration `0012_share_links_token_unique.sql` adds `ALTER TABLE share_links ADD CONSTRAINT share_links_token_key UNIQUE (token);`. Defense-in-depth against token collision is now at the database layer.
 
 ---
 
@@ -278,30 +275,27 @@
 
 ### T1 — No automated test suite
 **Category:** Testing  
-**Severity:** P1  
-**Impact:** Zero unit tests, integration tests, or E2E tests exist. The quality gate is TypeScript strict mode + ESLint + `npm run build`. Any regression requires manual discovery via the QA checklist.  
-**Fix:** Add Vitest for unit tests of critical lib functions (`lib/ai/validate.ts`, `lib/sharing/sanitize.ts`, `lib/analysis/readiness.ts`). Add Playwright for E2E testing of the demo flow.  
-**Effort:** L  
-**Blocks pilot:** No — but any regression during the pilot is caught manually
+**Severity:** P1 → ✅ RESOLVED in Prompt 21  
+**Impact:** ~~Zero unit tests, integration tests, or E2E tests exist.~~  
+**Fix applied:** Vitest unit tests for `lib/utils/time.ts`, `lib/ai/report-schema.ts`, `lib/analysis/normalize-generated-report.ts`, `lib/sharing/sanitize-report.ts`, and `lib/utils/permissions.ts`. React Testing Library component smoke tests for `ConfidenceBadge`, `VerificationBadge`, and `EmptyState`. 131 tests total, all passing.  
+See [`/docs/TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
 ---
 
 ### T2 — No CI/CD pipeline
 **Category:** Testing  
-**Severity:** P1  
-**Impact:** No GitHub Actions (or equivalent) workflow runs typecheck/lint/build on pull requests. Any contributor (or future self) can merge broken code.  
-**Fix:** Add `.github/workflows/ci.yml` that runs `npm run typecheck && npm run lint && npm run build` on every push and pull request. This is a 20-line YAML file.  
-**Effort:** S  
-**Blocks pilot:** No — but essential before adding any contributors
+**Severity:** P1 → ✅ RESOLVED in Prompt 21  
+**Impact:** ~~No GitHub Actions workflow runs typecheck/lint/build on pull requests.~~  
+**Fix applied:** `.github/workflows/ci.yml` runs typecheck, lint, `npm run test`, and build on every push and pull request. No real secrets required in CI.
 
 ---
 
 ### T3 — No test fixtures or seed scripts
 **Category:** Testing  
-**Severity:** P3  
-**Impact:** Tests that require database state would need to set up and tear down data manually. No fixtures or database seed scripts exist.  
-**Fix:** Create a `test/fixtures/` directory with typed factory functions for each entity (team, game, player, report). Tie to a Supabase test project or use in-memory mocks.  
-**Effort:** M  
+**Severity:** P3 → ✅ PARTIALLY RESOLVED in Prompt 21  
+**Impact:** In-memory typed fixtures created in `tests/fixtures/` for players, events, analysis input, generated report, and full report data. Database seed scripts for Supabase still not implemented.  
+**Remaining work:** Supabase test project + integration test seeding (post-pilot).  
+**Effort remaining:** M  
 **Blocks pilot:** No
 
 ---
@@ -328,14 +322,10 @@
 
 ---
 
-### S3 — `Math.random()` for slug suffixes
+### S3 — `Math.random()` for slug suffixes ✅ RESOLVED — Prompt 25
 **Category:** Security  
-**Severity:** P2  
-**File:** `lib/utils/slug.ts`  
-**Impact:** Team slugs use `Math.random().toString(36).slice(2, 6)` for uniqueness suffixes. `Math.random()` is not cryptographically secure. For team slugs this is low risk (not a security token), but should use `crypto.getRandomValues()` for consistency.  
-**Fix:** Replace with `crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0, 4)`.  
-**Effort:** S  
-**Blocks pilot:** No
+**Severity:** P2 → ✅ RESOLVED  
+**Resolution:** `lib/utils/slug.ts` `generateSlugWithSuffix` now uses `crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0, 4)` for consistent cryptographic randomness throughout the codebase.
 
 ---
 
@@ -397,11 +387,12 @@
 | Priority | Items | Count |
 |----------|-------|-------|
 | P0 | OpenAI spend cap (operational, not code) | 1 |
-| P1 | D3 (share token UNIQUE), T1 (no tests), T2 (no CI), S1 (rate limiting), DEP1 (error tracking), DEP3 (DB backup) | 6 |
-| P2 | A1, A2, A4, A5, D4, D5, AI1–AI4, V2, V4, UX1–UX4, S2, S3, DEP2 | ~16 |
-| P3 | A3, D1, D2, AI5, V1, V3, UX5, T3, S4 | ~9 |
+| P1 | ~~D3 (share token UNIQUE)~~, ~~T1 (no tests)~~, ~~T2 (no CI)~~, S1 (rate limiting), DEP1 (error tracking), DEP3 (DB backup) | 3 open (3 resolved) |
+| P2 | A1, A2, A4, A5, D4, D5, AI1–AI4, V2, V4, UX1–UX4, S2, ~~S3~~, DEP2 | ~15 |
+| P3 | A3, D1, D2, AI5, V1, V3, UX5, T3 (partial), S4 | ~9 |
 
-*Total items: ~32*
+*Total items: ~28 open (T1, T2 resolved in Prompt 21; D3, S3 resolved in Prompt 25)*  
+*Last updated: 2026-06-02 — Prompt 25*
 
 ---
 

@@ -6,15 +6,39 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { safeRedirect } from "@/lib/auth/redirect";
 
-export function SignupForm() {
+// Basic RFC 5322-compatible email check without a library.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface SignupFormProps {
+  redirectTo?: string;
+}
+
+export function SignupForm({ redirectTo }: SignupFormProps) {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function validate(): string | null {
+    const name = fullName.trim();
+    if (!name) return "Please enter your name.";
+    if (name.length < 2) return "Name must be at least 2 characters.";
+    if (name.length > 100) return "Name must be 100 characters or fewer.";
+
+    if (!email.trim()) return "Please enter your email address.";
+    if (!EMAIL_RE.test(email.trim())) return "Please enter a valid email address.";
+
+    if (password.length < 8) return "Password must be at least 8 characters.";
+    if (password !== confirmPassword) return "Passwords do not match.";
+
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,16 +52,9 @@ export function SignupForm() {
       return;
     }
 
-    if (!fullName.trim()) {
-      setError("Please enter your name.");
-      return;
-    }
-    if (!email.trim()) {
-      setError("Please enter your email address.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -55,7 +72,7 @@ export function SignupForm() {
       password,
       options: {
         data: { full_name: fullName.trim() },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeRedirect(redirectTo))}`,
       },
     });
 
@@ -73,15 +90,14 @@ export function SignupForm() {
       return;
     }
 
-    // If a session was created immediately (email confirmation disabled),
-    // redirect to dashboard. Otherwise, show the confirmation prompt.
+    // Session created immediately (email confirmation disabled) → go to dashboard.
     if (data.session) {
-      router.push("/dashboard");
+      router.push(safeRedirect(redirectTo));
       router.refresh();
       return;
     }
 
-    // Email confirmation is required.
+    // Email confirmation required.
     setSuccessMessage(
       "Account created! Check your email inbox for a confirmation link, then sign in."
     );
@@ -148,7 +164,18 @@ export function SignupForm() {
         hint="Minimum 8 characters"
       />
 
-      <Button type="submit" className="w-full mt-1" loading={loading}>
+      <Input
+        label="Confirm password"
+        type="password"
+        placeholder="Re-enter your password"
+        autoComplete="new-password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        disabled={loading}
+        required
+      />
+
+      <Button type="submit" className="w-full mt-1" loading={loading} disabled={loading}>
         {loading ? "Creating account…" : "Create account"}
       </Button>
 

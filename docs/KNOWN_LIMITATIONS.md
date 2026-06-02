@@ -135,6 +135,18 @@ There is no "Forgot password?" feature in v1. Password resets must be initiated 
 
 ---
 
+### No post-signup auto-sign-in when email confirmation is enabled
+
+When Supabase email confirmation is enabled, the user sees a "check your email" message after signup. After clicking the confirmation link, they land on the dashboard. However, they are not automatically signed in on the confirmation screen — they must click "Go to sign in" and log in manually. A seamless auto-sign-in after confirmation is planned.
+
+---
+
+### Settings page is a UI placeholder
+
+The `/settings` page renders Profile, Security, and Notification cards but all inputs are disabled. Profile editing (name, avatar) and password changes are not yet wired to Supabase. Coaches must use the Supabase dashboard to change account details.
+
+---
+
 ### No team invitations
 
 There is no invitation workflow. Team owners create the team and invite members through the Supabase dashboard or by directly inserting `team_members` rows. In-app invitations via email are planned.
@@ -185,15 +197,25 @@ GameIQ v1 has no billing system. All features are accessible to any authenticate
 
 ---
 
-### No automated test suite
-
-Unit and integration tests are not currently set up. TypeScript strict mode, ESLint, and the production build (`npm run build`) serve as the automated quality gate. A proper test suite (Vitest, Playwright) is planned.
-
----
-
 ### Supabase free tier pauses after inactivity
 
 Supabase free-tier projects pause after approximately 1 week of inactivity. The app will show a configuration error until the project is unpaused. For production use, upgrade to Supabase Pro.
+
+---
+
+## Database and Security Limitations
+
+### share_links.token was previously application-only unique
+
+In versions prior to RC1, share token uniqueness was enforced only at the application layer (144-bit entropy makes collision practically impossible, but no database-level guarantee existed). Migration `0012_share_links_token_unique.sql` adds a `UNIQUE` constraint at the database level. This migration must be applied to existing Supabase projects.
+
+---
+
+## Automated Tests
+
+### E2E tests require a live Supabase project
+
+Playwright E2E tests (`npm run test:e2e`) cover public routes only. Full authenticated flows (team creation, report generation, share links, export) are not yet covered by automated E2E tests. Manual browser testing against a live Supabase project is required. This is a known gap documented in [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
 ---
 
@@ -212,3 +234,7 @@ For the prioritized fix list, see [`PRIORITIZED_ISSUES.md`](PRIORITIZED_ISSUES.m
 For the v1.1 engineering plan that addresses the most important limitations, see [`V1_1_ENGINEERING_ROADMAP.md`](V1_1_ENGINEERING_ROADMAP.md).
 
 For the computer vision roadmap explaining when and how automated video analysis will be added, see [`COMPUTER_VISION_ROADMAP.md`](COMPUTER_VISION_ROADMAP.md).
+
+---
+
+*Last updated: 2026-06-02 — Prompt 26: Final Project Handoff (added database uniqueness note, E2E coverage limitation)*

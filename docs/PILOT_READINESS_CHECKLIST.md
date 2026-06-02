@@ -109,13 +109,20 @@
 |------|--------|-------|
 | Production deployment is live and stable | ? | Requires Vercel deployment verification |
 | All required environment variables are set in Vercel | ? | Must verify before pilot |
-| Supabase project is configured with all 10 migrations | ? | Must verify on production project |
+| Supabase project is configured with all 11 migrations (0001–0011) | ? | Must verify on production project |
 | Auth redirect URLs are set in Supabase dashboard | ? | Must verify |
 | Storage bucket (`game-videos`) exists and is private | ? | Must verify |
-| Founder has a support contact process for pilot coaches | ⚠️ | Define before pilot (email? Slack DM?) |
+| Founder has a support contact process for pilot coaches | ✅ | `/support` page created and backed by `support_requests` table |
+| Support requests visible in `/admin/support` | ✅ | Admin-gated, built in Prompt 23 |
 | Feedback collection is working (`/feedback` form) | ✅ | Form → `product_feedback` table |
+| Admin hub exists at `/admin` | ✅ | Admin index page created |
 | Admin analytics page is working | ✅ | `/admin/analytics` — verified in build |
-| Founder can delete pilot team data if requested | ⚠️ | Via Supabase dashboard only — document process |
+| Founder can delete pilot team data if requested | ✅ | [`DATA_DELETION_PLAN.md`](DATA_DELETION_PLAN.md) created with full SQL runbook |
+| Share link revocation process documented | ✅ | [`SHARE_LINK_REVOCATION_RUNBOOK.md`](SHARE_LINK_REVOCATION_RUNBOOK.md) |
+| Video deletion process documented | ✅ | [`VIDEO_DELETION_RUNBOOK.md`](VIDEO_DELETION_RUNBOOK.md) |
+| Incident response process documented | ✅ | [`INCIDENT_RESPONSE_RUNBOOK.md`](INCIDENT_RESPONSE_RUNBOOK.md) |
+| Pilot participant expectations documented | ✅ | [`PILOT_PARTICIPANT_EXPECTATIONS.md`](PILOT_PARTICIPANT_EXPECTATIONS.md) |
+| Pilot support runbook documented | ✅ | [`PILOT_SUPPORT_RUNBOOK.md`](PILOT_SUPPORT_RUNBOOK.md) |
 | Founder has tested the full demo flow in production (not just dev) | ? | Should be done before inviting any pilot coach |
 
 ---
@@ -144,5 +151,5 @@
 
 ---
 
-*Last updated: June 2026*  
-*See also: [`COACH_DEMO_GUIDE.md`](COACH_DEMO_GUIDE.md), [`GO_NO_GO_CRITERIA.md`](GO_NO_GO_CRITERIA.md)*
+*Last updated: Prompt 23 — Pilot Support, Data Deletion, and Operational Runbook (June 2026)*  
+*See also: [`COACH_DEMO_GUIDE.md`](COACH_DEMO_GUIDE.md), [`GO_NO_GO_CRITERIA.md`](GO_NO_GO_CRITERIA.md), [`PILOT_SUPPORT_RUNBOOK.md`](PILOT_SUPPORT_RUNBOOK.md)*

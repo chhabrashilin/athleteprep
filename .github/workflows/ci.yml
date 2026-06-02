@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    name: Typecheck / Lint / Test / Build
+    runs-on: ubuntu-latest
+
+    env:
+      # Supabase — safe placeholder values for CI (build will degrade gracefully)
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+      # AI — use mock mode; no real API calls in CI
+      AI_PROVIDER: mock
+      NEXT_PUBLIC_ENABLE_REAL_AI: "false"
+      NEXT_PUBLIC_ENABLE_MOCK_DATA: "true"
+      # App
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: GameIQ
+      NEXT_PUBLIC_STORAGE_BUCKET: game-videos
+      NEXT_PUBLIC_THUMBNAIL_BUCKET: game-thumbnails
+      REPORT_EXPORT_BUCKET: report-exports
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and component tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build

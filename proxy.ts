@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { isSafeRedirect } from "@/lib/auth/redirect";
 
 // Routes that never require authentication
-const PUBLIC_PATHS = new Set(["/", "/auth/login", "/auth/signup", "/auth/error"]);
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/auth/login",
+  "/auth/signup",
+  "/auth/error",
+  "/privacy",
+  "/feedback",
+  "/request-access",
+  "/support",
+  "/demo",
+]);
 
 // Route prefixes that never require authentication
 // /share/ routes validate access via share token and visibility mode server-side
@@ -31,9 +42,12 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     // Unauthenticated: redirect to login, preserving the intended destination.
+    // Only store a redirectTo param for safe same-origin paths.
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth/login";
-    loginUrl.searchParams.set("redirectTo", pathname);
+    if (isSafeRedirect(pathname)) {
+      loginUrl.searchParams.set("redirectTo", pathname);
+    }
     return NextResponse.redirect(loginUrl);
   }
 

@@ -6,12 +6,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { safeRedirect } from "@/lib/auth/redirect";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface LoginFormProps {
   redirectTo?: string;
 }
 
-export function LoginForm({ redirectTo = "/dashboard" }: LoginFormProps) {
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +34,10 @@ export function LoginForm({ redirectTo = "/dashboard" }: LoginFormProps) {
 
     if (!email.trim()) {
       setError("Please enter your email address.");
+      return;
+    }
+    if (!EMAIL_RE.test(email.trim())) {
+      setError("Please enter a valid email address.");
       return;
     }
     if (!password) {
@@ -65,12 +72,7 @@ export function LoginForm({ redirectTo = "/dashboard" }: LoginFormProps) {
     }
 
     // Success — navigate to the intended destination.
-    const destination =
-      redirectTo.startsWith("/") && !redirectTo.startsWith("//")
-        ? redirectTo
-        : "/dashboard";
-
-    router.push(destination);
+    router.push(safeRedirect(redirectTo));
     router.refresh();
   }
 
@@ -109,7 +111,7 @@ export function LoginForm({ redirectTo = "/dashboard" }: LoginFormProps) {
         />
       </div>
 
-      <Button type="submit" className="w-full mt-1" loading={loading}>
+      <Button type="submit" className="w-full mt-1" loading={loading} disabled={loading}>
         {loading ? "Signing in…" : "Sign in"}
       </Button>
 

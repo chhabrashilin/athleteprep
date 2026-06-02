@@ -33,6 +33,9 @@ Run all migrations in order in the **Supabase SQL Editor** (Dashboard → SQL Ed
 2. `supabase/migrations/0002_team_creation_rpc.sql` — Atomic team + owner creation RPC (`create_team_with_owner`).
 3. `supabase/migrations/0003_storage_policies.sql` — Storage bucket RLS policies.
 4. `supabase/migrations/0007_verification_editing_adjustments.sql` — Verification/editing schema adjustments.
+5. `supabase/migrations/0009_feedback_tables.sql` — `access_requests` and `product_feedback` tables with RLS.
+6. `supabase/migrations/0010_product_events.sql` — `product_events` table for founder analytics.
+7. `supabase/migrations/0011_support_requests.sql` — `support_requests` table for pilot coach support.
 
 Run them **in order**. If one fails, fix it before proceeding.
 
@@ -40,7 +43,7 @@ Run them **in order**. If one fails, fix it before proceeding.
 ```sql
 select tablename from pg_tables where schemaname = 'public' order by tablename;
 ```
-You should see: `analysis_jobs`, `clips`, `coaching_insights`, `event_timestamps`, `exports`, `game_reports`, `games`, `opponent_tendencies`, `player_reports`, `players`, `practice_recommendations`, `profiles`, `share_links`, `team_members`, `teams`, `verification_feedback`, `video_assets`.
+You should see: `analysis_jobs`, `clips`, `coaching_insights`, `event_timestamps`, `exports`, `game_reports`, `games`, `opponent_tendencies`, `player_reports`, `players`, `practice_recommendations`, `product_events`, `product_feedback`, `profiles`, `share_links`, `support_requests`, `team_members`, `teams`, `verification_feedback`, `video_assets` (plus `access_requests`).
 
 ---
 

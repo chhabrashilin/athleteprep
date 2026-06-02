@@ -3,6 +3,7 @@
 > A prioritized issue list ready for conversion into GitHub Issues. Each issue includes a description, affected area, effort estimate, and acceptance criteria.
 
 **Date:** June 2026  
+**Last updated:** Prompt 21 — Automated Test Suite and CI Foundation  
 **Based on:** Technical debt audit, MVP readiness report, known limitations
 
 ---
@@ -37,11 +38,10 @@
 
 ---
 
-**P1-2: Add CI/CD pipeline (GitHub Actions)**  
+**P1-2: Add CI/CD pipeline (GitHub Actions)** ✅ RESOLVED — Prompt 21  
 **Area:** Engineering process  
-**Description:** No automated CI exists. A broken typecheck or lint failure can ship to production without detection.  
-**Effort:** S  
-**Acceptance criteria:** `.github/workflows/ci.yml` exists. Runs `npm run typecheck && npm run lint && npm run build` on every push to `main` and on all PRs. Green badge visible in repo.
+**Description:** ~~No automated CI exists.~~  
+**Resolution:** `.github/workflows/ci.yml` created. Runs typecheck, lint, `npm run test` (131 tests), and build on every push and PR. No real secrets required. Uses mock AI provider.
 
 ---
 
@@ -53,11 +53,9 @@
 
 ---
 
-**P1-4: Add database UNIQUE constraint on `share_links.token`**  
+**P1-4: Add database UNIQUE constraint on `share_links.token`** ✅ RESOLVED — Prompt 25  
 **Area:** Database / Security  
-**Description:** Token uniqueness is enforced by application logic but not at the database level. Add defense-in-depth constraint.  
-**Effort:** S  
-**Acceptance criteria:** New migration adds `UNIQUE` constraint on `share_links.token`. Migration runs cleanly on a fresh Supabase project.
+**Resolution:** Migration `0012_share_links_token_unique.sql` adds `ALTER TABLE share_links ADD CONSTRAINT share_links_token_key UNIQUE (token);`.
 
 ---
 
@@ -147,11 +145,9 @@
 
 ---
 
-**P2-7: Replace `Math.random()` with `crypto.getRandomValues()` in slug generation**  
+**P2-7: Replace `Math.random()` with `crypto.getRandomValues()` in slug generation** ✅ RESOLVED — Prompt 25  
 **Area:** Security  
-**Description:** `lib/utils/slug.ts` uses `Math.random()` for slug uniqueness suffixes. Not a direct security risk (slugs are not tokens) but inconsistent with the rest of the codebase's security stance.  
-**Effort:** S  
-**Acceptance criteria:** `lib/utils/slug.ts` uses `crypto.getRandomValues()` for the collision-avoidance suffix. No behavior change — just stronger randomness.
+**Resolution:** `lib/utils/slug.ts` now uses `crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0, 4)` for the collision-avoidance suffix.
 
 ---
 
@@ -242,10 +238,10 @@
 
 ---
 
-**P3-9: Vitest unit tests for critical lib functions**  
+**P3-9: Vitest unit tests for critical lib functions** ✅ RESOLVED — Prompt 21  
 **Area:** Testing  
-**Description:** Add unit tests for `lib/ai/validate.ts`, `lib/sharing/sanitize.ts`, `lib/analysis/readiness.ts`. These are the highest-leverage functions for catching regressions.  
-**Effort:** M
+**Description:** ~~Add unit tests for critical lib functions.~~  
+**Resolution:** 131 tests across 7 test files covering time utilities, AI schema validation, normalization, sharing sanitization, and permissions. See [`/docs/TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
 ---
 
@@ -257,4 +253,4 @@ See [`COMPUTER_VISION_ROADMAP.md`](COMPUTER_VISION_ROADMAP.md)
 
 ---
 
-*Last updated: June 2026*
+*Last updated: 2026-06-02 — Prompt 25 (P1-4 and P2-7 resolved)*

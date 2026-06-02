@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { getServerUser } from "@/lib/supabase/server";
+import { safeRedirect } from "@/lib/auth/redirect";
 
 export const metadata: Metadata = { title: "Sign In" };
 
@@ -15,11 +16,7 @@ export default async function LoginPage({
   const user = await getServerUser();
   if (user) {
     const { redirectTo } = await searchParams;
-    const destination =
-      redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
-        ? redirectTo
-        : "/dashboard";
-    redirect(destination);
+    redirect(safeRedirect(redirectTo));
   }
 
   const { redirectTo } = await searchParams;

@@ -344,12 +344,12 @@ These are intentional future capabilities. Architecture must not block them, but
 
 ## Summary: Built vs. What Is Next
 
-### Built in MVP (Complete as of Phase 10)
+### Built in MVP (Complete — GameIQ MVP RC1, 2026-06-02)
 
 | Feature | Status |
 |---------|--------|
-| Supabase Auth (email/password, PKCE, session middleware) | ✅ |
-| Team workspaces with role-based access | ✅ |
+| Supabase Auth (email/password, PKCE, session middleware, confirm-password, safe redirects) | ✅ |
+| Team workspaces with role-based access (owner, coach, analyst, player) | ✅ |
 | Roster management (CRUD, archive, search, filter) | ✅ |
 | Game/practice creation with 4-section metadata form | ✅ |
 | Video upload to private Supabase Storage + signed URL playback | ✅ |
@@ -359,22 +359,49 @@ These are intentional future capabilities. Architecture must not block them, but
 | AI report generation — OpenAI GPT-4o-mini (production-ready) | ✅ |
 | Strict Zod validation on all AI JSON outputs | ✅ |
 | 14 AI guardrail rules in system prompt | ✅ |
-| Full report dashboard (insights, players, opponent, practice, evidence) | ✅ |
+| Full report dashboard (6 sections: insights, players, opponent, practice, evidence, assumptions) | ✅ |
 | Insight detail pages with video seek to timestamp | ✅ |
 | Coach verification (4 states: accurate/partial/inaccurate/edited) | ✅ |
 | Inline editing with append-only audit trail | ✅ |
-| 4-mode shareable reports with 144-bit entropy tokens | ✅ |
+| 4-mode shareable reports with 144-bit entropy tokens + DB UNIQUE constraint | ✅ |
 | Server-side report sanitization by visibility mode | ✅ |
 | Export-ready print/PDF view with section selector | ✅ |
 | Founder analytics (13 instrumented events, admin dashboard) | ✅ |
-| Landing page with 7 sections | ✅ |
-| Demo experience page | ✅ |
-| Request-access form | ✅ |
-| Product feedback form | ✅ |
-| Admin feedback/analytics review | ✅ |
-| Demo workspace (cricket team, game, 12 timestamps, AI report) | ✅ |
+| Landing page (7 sections), demo page, request-access form, feedback form | ✅ |
+| Support intake form + admin support review | ✅ |
+| Admin hub (/admin, /admin/analytics, /admin/feedback, /admin/support) | ✅ |
+| Demo workspace (cricket team, 10 players, 12 timestamps, full AI report) | ✅ |
+| Global error boundary + 404 page | ✅ |
+| Centralized feature flags + env validation | ✅ |
+| CI/CD via GitHub Actions | ✅ |
+| 167 automated tests (Vitest + React Testing Library) across 9 files | ✅ |
+| 6 operational runbooks | ✅ |
+| share_links.token DB UNIQUE constraint (migration 0012) | ✅ |
 
-### Near-Term Next (Product / Validation)
+### v1.1 — Pilot Hardening (Next Sprint)
+
+| Task | Priority |
+|------|----------|
+| Sentry error tracking | P1 |
+| Settings page wiring (profile update + password reset) | P1 |
+| Rate limiting on analysis generation endpoint | P1 |
+| OpenAI token/cost tracking in analysis_jobs | P2 |
+| AI retry logic (max 2 retries) | P2 |
+| prompt_version field in analysis_jobs | P2 |
+| idx_event_timestamps_game_id DB index | P2 |
+| Signed video URL expiry UX | P2 |
+| Onboarding guidance for new teams | P2 |
+
+### v1.2 — Product Improvements from Coach Feedback
+
+- Team member invitation workflow (email-based, in-app)
+- Password reset UI flow
+- Player role scoping (players see only their own report section)
+- Season analytics — cross-game aggregation and trend detection
+- Inline report quality rating widget
+- Timestamp form — collapse optional fields behind "Advanced" toggle
+
+### Near-Term (Product / Validation)
 
 - 5–10 structured coach discovery interviews
 - 3 pilot teams complete a real game upload and report review

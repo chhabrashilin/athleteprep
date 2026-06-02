@@ -74,7 +74,7 @@ export default async function SettingsPage() {
             <CardDescription>Control when and how you receive updates.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-400">Notification preferences coming in Phase 7.</p>
+            <p className="text-sm text-slate-400">Notification preferences are on the roadmap.</p>
           </CardContent>
         </Card>
 

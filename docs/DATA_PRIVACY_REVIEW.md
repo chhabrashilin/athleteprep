@@ -153,12 +153,15 @@ When `AI_PROVIDER=openai` is set:
 
 | Requirement | Status |
 |-------------|--------|
-| Inform coaches before they upload data | ⚠️ Add to pilot onboarding email |
-| Get explicit acknowledgment from pilot coaches | ⚠️ Add checkbox to pilot sign-up |
-| Avoid youth athlete data | ⚠️ Add to pilot coach criteria |
-| Document data deletion process | ⚠️ Document in pilot guide |
-| Notify coaches if a security issue affects their data | ❌ No incident response process exists |
-| Confirm OpenAI data handling with pilots | ⚠️ Add disclosure to UI |
+| Inform coaches before they upload data | ✅ [`PILOT_PARTICIPANT_EXPECTATIONS.md`](PILOT_PARTICIPANT_EXPECTATIONS.md) created |
+| Get explicit acknowledgment from pilot coaches | ⚠️ Share the expectations doc verbally during onboarding; consent checkbox is a future improvement |
+| Avoid youth athlete data | ✅ Stated in PILOT_PARTICIPANT_EXPECTATIONS.md — adult athletes only |
+| Document data deletion process | ✅ [`DATA_DELETION_PLAN.md`](DATA_DELETION_PLAN.md) created |
+| Notify coaches if a security issue affects their data | ✅ [`INCIDENT_RESPONSE_RUNBOOK.md`](INCIDENT_RESPONSE_RUNBOOK.md) covers notification steps |
+| Confirm OpenAI data handling with pilots | ✅ Disclosure added to updated `/privacy` page and PILOT_PARTICIPANT_EXPECTATIONS.md |
+| Support request intake | ✅ `/support` page and `support_requests` table created |
+| Share link revocation process | ✅ [`SHARE_LINK_REVOCATION_RUNBOOK.md`](SHARE_LINK_REVOCATION_RUNBOOK.md) created |
+| Video deletion process | ✅ [`VIDEO_DELETION_RUNBOOK.md`](VIDEO_DELETION_RUNBOOK.md) created |
 
 ---
 
@@ -192,5 +195,5 @@ This is sufficient for a closed pilot with 3–5 consenting coaches. It is not s
 
 ---
 
-*Last updated: June 2026*  
+*Last updated: Prompt 23 — Pilot Support, Data Deletion, and Operational Runbook (June 2026)*  
 *This document is for internal product review purposes only. Not legal advice.*

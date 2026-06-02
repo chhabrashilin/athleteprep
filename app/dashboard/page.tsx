@@ -9,6 +9,7 @@ import { TeamSummaryGrid } from "@/components/dashboard/TeamSummaryGrid";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { Film, Plus, BarChart3, ArrowRight, Zap } from "lucide-react";
 import { getServerUser } from "@/lib/supabase/server";
+import { ensureCurrentUserProfile } from "@/lib/db/profiles";
 import { getTeamsWithMembershipForCurrentUser } from "@/lib/db/teams";
 import { getPlayerCountsForTeams } from "@/lib/db/players";
 import { getGameCountsForTeams } from "@/lib/db/games";
@@ -17,9 +18,12 @@ import { getRecentReportsForTeams } from "@/lib/db/reports";
 export const metadata: Metadata = { title: "Dashboard — GameIQ" };
 
 export default async function DashboardPage() {
+  // ensureCurrentUserProfile guarantees the profiles row exists even if the
+  // DB trigger was delayed or missed — safe to call on every dashboard load.
   const [user, teamsWithMembership] = await Promise.all([
     getServerUser(),
     getTeamsWithMembershipForCurrentUser(),
+    ensureCurrentUserProfile(),
   ]);
 
   const firstName =

@@ -9,7 +9,7 @@
 GameIQ uses **Supabase Auth** (email + password in v1) managed through `@supabase/ssr` for proper cookie-based session handling in Next.js App Router.
 
 - Sessions are stored in HTTP-only cookies, managed by `@supabase/ssr`.
-- Middleware refreshes sessions on every request.
+- The **proxy** (`proxy.ts`) refreshes sessions on every request. In Next.js 16 the middleware file was renamed from `middleware.ts` to `proxy.ts` and the exported function from `middleware` to `proxy`. See `/docs/AUTH_FLOW_QA.md#troubleshooting`.
 - Server Components, Server Actions, and Route Handlers read sessions server-side via cookies.
 - Client Components use the browser Supabase client for interactive auth (sign-up, sign-in, sign-out).
 - Passwords are never stored by the application — Supabase Auth handles all credential management.
@@ -59,9 +59,9 @@ Protected routes include:
 
 ---
 
-## 5. Middleware Behavior
+## 5. Proxy Behavior (Next.js 16 Middleware)
 
-`middleware.ts` runs on every matching request (all paths except `_next/static`, `_next/image`, and static file extensions).
+`proxy.ts` runs on every matching request (all paths except `_next/static`, `_next/image`, and static file extensions). In Next.js 16, the middleware file convention was renamed from `middleware.ts` to `proxy.ts` with the function renamed from `middleware` to `proxy`.
 
 Flow:
 1. `updateSession()` is called to refresh the Supabase session from request cookies.
@@ -77,10 +77,11 @@ If Supabase is not configured (missing env vars), `updateSession()` is a no-op a
 
 | File | Role |
 |------|------|
-| `middleware.ts` | Root middleware — session refresh + route protection |
+| `proxy.ts` | Root proxy (Next.js 16) — session refresh + route protection |
+| `lib/auth/redirect.ts` | `isSafeRedirect` / `safeRedirect` — open-redirect prevention |
 | `lib/supabase/client.ts` | Browser Supabase client (for Client Components) |
 | `lib/supabase/server.ts` | Server Supabase client (for Server Components + Route Handlers) |
-| `lib/supabase/middleware.ts` | Session update helper used by middleware.ts |
+| `lib/supabase/middleware.ts` | `updateSession()` helper called by `proxy.ts` |
 | `app/auth/login/page.tsx` | Sign-in page (Server Component wrapping LoginForm) |
 | `app/auth/signup/page.tsx` | Sign-up page (Server Component wrapping SignupForm) |
 | `app/auth/callback/route.ts` | Auth callback Route Handler (email confirm + PKCE) |
@@ -95,7 +96,7 @@ If Supabase is not configured (missing env vars), `updateSession()` is a no-op a
 
 ## 7. Sign-Up Flow
 
-1. User fills out the signup form (name, email, password ≥ 8 chars).
+1. User fills out the signup form (full name 2–100 chars, email, password ≥ 8 chars, confirm password).
 2. Client calls `supabase.auth.signUp({ email, password, options: { data: { full_name } } })`.
 3. **If email confirmation is disabled** (default for many Supabase projects): a session is created immediately and the user is redirected to `/dashboard`.
 4. **If email confirmation is enabled**: a confirmation email is sent and the user sees a "check your email" message. Clicking the link in the email triggers `/auth/callback`, which exchanges the token and redirects to `/dashboard`.
@@ -149,7 +150,7 @@ The profile stores:
 | Server Components | `createServerSupabaseClient()` | `@/lib/supabase/server` |
 | Server Actions | `createServerSupabaseClient()` | `@/lib/supabase/server` |
 | Route Handlers | `createServerClient` directly or `createServerSupabaseClient()` | `@supabase/ssr` or `@/lib/supabase/server` |
-| Middleware | `updateSession()` | `@/lib/supabase/middleware` |
+| Proxy (`proxy.ts`) | `updateSession()` | `@/lib/supabase/middleware` |
 
 Never use the service role key in the browser. Never use the anon key where RLS should not apply.
 
@@ -158,7 +159,7 @@ Never use the service role key in the browser. Never use the anon key where RLS 
 ## 12. Security Rules
 
 1. The `SUPABASE_SERVICE_ROLE_KEY` is used server-side only and never exposed to the browser.
-2. Redirect URLs are validated (`startsWith("/") && !startsWith("//")`) to prevent open redirects.
+2. Redirect URLs are validated via `lib/auth/redirect.ts` (`isSafeRedirect`) to prevent open-redirect attacks. The helper is unit-tested in `tests/unit/auth-redirect.test.ts`.
 3. Middleware runs on the server — client-side route guards alone are not the security boundary.
 4. RLS policies are the database-level security boundary. Middleware is a UX layer.
 5. Passwords are never stored by the application — Supabase Auth manages credentials.

@@ -20,6 +20,6 @@ export function generateSlug(name: string): string {
  */
 export function generateSlugWithSuffix(name: string): string {
   const base = generateSlug(name);
-  const suffix = Math.random().toString(36).slice(2, 6);
+  const suffix = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0, 4);
   return `${base}-${suffix}`;
 }

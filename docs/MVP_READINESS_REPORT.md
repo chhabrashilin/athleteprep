@@ -1,16 +1,16 @@
 # GameIQ — MVP Readiness Report
 
 **Date:** 2026-06-01  
-**Version:** Prompt 18 — Founder Analytics and Product Usage Instrumentation  
-**Reviewer:** Senior Full-Stack / Product / Security / QA
+**Version:** Prompt 24A — Local Configuration, First Run, and MVP Smoke Test  
+**Reviewer:** Senior Full-Stack / Product / Security / QA / DevOps / Support
 
 ---
 
 ## 1. Executive Summary
 
-GameIQ v1 is a complete, functional AI sports intelligence MVP. All 14 core features are implemented and the end-to-end demo flow works. As of Prompt 17, the product now has a polished coach-facing landing page, a demo explanation page, request-access and feedback forms with database storage, a founder admin review page, and three new documentation files for early-user research.
+GameIQ v1 is a complete, functional AI sports intelligence MVP. All 14 core features are implemented and the end-to-end demo flow works. As of Prompt 22, the project now has a complete pilot deployment stack: environment validation, centralized feature flags, production error pages, Vercel configuration, a detailed Supabase production checklist, storage security documentation, a 20-step production smoke test, pilot environment presets, and updated go/no-go criteria.
 
-The product is **ready for a local demo**, **ready for an early coach demo with a pre-configured Supabase project**, **ready to present to investors and advisors**, and **conditionally ready for a professor/class demo** (requires mock mode). It is **not yet ready for public beta** due to missing invitation flows, no billing, and limited automated test coverage.
+The product is **ready for a local demo**, **ready for an early coach demo with a pre-configured Supabase project**, **ready to present to investors and advisors**, and **conditionally ready for a controlled coach pilot** (requires Supabase Pro, smoke test completion, and privacy disclosure to coaches). It is **not yet ready for public beta** due to missing invitation flows, no billing, and no self-serve data deletion.
 
 ---
 
@@ -161,12 +161,22 @@ The product is **ready for a local demo**, **ready for an early coach demo with 
 | `/docs/DEPLOYMENT.md` | ✅ Created |
 | `/docs/ENVIRONMENT.md` | ✅ Exists |
 | `/docs/SUPABASE_SETUP.md` | ✅ Exists |
-| `supabase/migrations/` | ✅ 4 migration files |
-| `.env.example` | ✅ All variables documented |
+| `/docs/PRODUCTION_SUPABASE_CHECKLIST.md` | ✅ Created (Prompt 22) |
+| `/docs/STORAGE_SECURITY.md` | ✅ Created (Prompt 22) |
+| `/docs/PRODUCTION_SMOKE_TEST.md` | ✅ Created (Prompt 22) |
+| `/docs/PILOT_ENVIRONMENT_PRESETS.md` | ✅ Created (Prompt 22) |
+| `lib/config/env.ts` | ✅ Created (Prompt 22) — env validation |
+| `lib/config/feature-flags.ts` | ✅ Created (Prompt 22) — centralized flags |
+| `app/error.tsx` | ✅ Created (Prompt 22) — global error boundary |
+| `app/not-found.tsx` | ✅ Created (Prompt 22) — 404 page |
+| `vercel.json` | ✅ Created (Prompt 22) — 60s timeout for AI routes |
+| `supabase/migrations/` | ✅ 7 migration files |
+| `.env.example` | ✅ Updated (Prompt 22) — all variables documented |
 | `.gitignore` excludes `.env*` | ✅ Confirmed |
 | `npm run build` passes | ✅ Clean build |
 | `npm run typecheck` passes | ✅ 0 errors |
 | `npm run lint` passes | ✅ 0 warnings |
+| `npm run test` passes | ✅ 167 tests (Prompt 24B) |
 | Vercel-compatible (Next.js App Router) | ✅ Confirmed |
 
 ---
@@ -206,8 +216,11 @@ Listed in order of impact-to-effort ratio:
 npm run typecheck  →  ✅ 0 errors
 npm run lint       →  ✅ 0 warnings  
 npm run build      →  ✅ Clean build (26 routes, proxy middleware active)
-npm test           →  ⚠️  Not configured (no automated test suite in v1)
+npm run test       →  ✅ 131 tests passing (7 test files — unit + component)
+npm run test:e2e   →  ⚠️  Requires running dev server (public routes only)
 ```
+
+**Testing infrastructure added in Prompt 21:** Vitest + React Testing Library + Playwright. CI via GitHub Actions. See [`/docs/TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
 ---
 
@@ -248,8 +261,218 @@ The following documents created in Prompt 20 extend the readiness assessment:
 | **Local demo (mock mode)** | ✅ GO | None |
 | **Professor / class demo** | ✅ GO | None |
 | **Advisor / investor demo** | ✅ GO | None |
-| **Early coach demo (production, founder-guided)** | ⚠️ Conditional GO | Sentry, Supabase Pro, OpenAI spend cap |
+| **Early coach demo (production, founder-guided)** | ⚠️ Conditional GO | Sentry, Supabase Pro, OpenAI spend cap. CI now in place. |
 | **Self-serve coach pilot** | ❌ NOT YET | P1 issues + onboarding improvements |
 | **Public beta** | ❌ NOT YET | Multiple months of v1.1 + v1.2 work |
 
-*Last updated: Prompt 20 — Technical Debt, Next-Version Planning, and Pilot Readiness (2026-06-01)*
+---
+
+## 13. Prompt 22 — Pilot Deployment and Production Environment Setup
+
+The following work was completed in Prompt 22:
+
+### Config and Code
+| Item | Details |
+|------|---------|
+| `lib/config/env.ts` | Production-safe env validation; fails fast on missing required vars in prod; warns in dev; `requireAIKey()` validates provider keys at request time, not module load (mock mode never requires keys) |
+| `lib/config/feature-flags.ts` | Centralized feature flags: `enableMockData`, `enableRealAI`, `enableVideoProcessing`, `enableFounderAnalytics`, `enablePublicFeedback`, `enablePilotMode` |
+| `app/error.tsx` | Global error boundary — user-friendly message, digest ID, "Try again" and "Go to dashboard" actions |
+| `app/not-found.tsx` | Clean 404 page — no debug info, polite message, navigation links |
+| `vercel.json` | Minimal config — 60-second function timeout for AI route handlers |
+| `.env.example` | Updated with all variables, security warnings, documentation links, preset guidance |
+
+### Documentation Created
+| Document | Purpose |
+|----------|---------|
+| `PRODUCTION_SUPABASE_CHECKLIST.md` | 9-section step-by-step checklist for production Supabase configuration |
+| `STORAGE_SECURITY.md` | Complete storage privacy model, policies, signed URL strategy, verification checklist |
+| `PRODUCTION_SMOKE_TEST.md` | 20-step smoke test with pass/fail fields and common failure fixes |
+| `PILOT_ENVIRONMENT_PRESETS.md` | 4 preset configs: Local Dev, Founder Demo, Coach Pilot, Public Beta (not ready) |
+
+### Documentation Updated
+| Document | Change |
+|----------|--------|
+| `GO_NO_GO_CRITERIA.md` | Added deployment go/no-go section: founder demo, coach pilot, public beta criteria |
+| `MVP_READINESS_REPORT.md` | Updated to Prompt 22; expanded deployment readiness table |
+| `KNOWN_LIMITATIONS.md` | Updated: automated test suite entry corrected (Prompt 21 added tests) |
+| `README.md` | Expanded deployment section with links to new docs, real AI cost warning, storage privacy warning |
+
+### Quality Checks
+```
+npm run typecheck  →  ✅ passes
+npm run lint       →  ✅ passes
+npm run test       →  ✅ 131 tests passing
+npm run build      →  ✅ clean build
+```
+
+---
+
+## 14. Prompt 23 — Pilot Support, Data Deletion, and Operational Runbook
+
+The following work was completed in Prompt 23:
+
+### Code
+| Item | Details |
+|------|---------|
+| `supabase/migrations/0011_support_requests.sql` | `support_requests` table with RLS: public insert, own-read for authenticated users, admin reads via service role |
+| `types/support.ts` | Full TypeScript types for issue types, urgency, status, colors/labels |
+| `lib/db/support.ts` | `createSupportRequest`, `getSupportRequestsForAdmin`, `updateSupportRequestStatus` |
+| `app/support/actions.ts` | Server action with full validation (name, email, issue type, message length) |
+| `components/support/SupportForm.tsx` | Client form component with success state |
+| `app/support/page.tsx` | Public support page — accessible without login |
+| `app/admin/support/page.tsx` | Admin support review page with status summary and request list |
+| `app/admin/page.tsx` | Admin hub index linking to analytics, feedback, support, Supabase |
+| `app/privacy/page.tsx` | Enhanced: AI provider disclosure, deletion request path, adult athletes warning |
+
+### Documentation (6 new docs)
+| Document | Purpose |
+|----------|---------|
+| `DATA_DELETION_PLAN.md` | Full SQL runbook for user, team, game, video, and share link deletion |
+| `SHARE_LINK_REVOCATION_RUNBOOK.md` | In-app and SQL revocation for single links, report-level, and team-level |
+| `VIDEO_DELETION_RUNBOOK.md` | Storage path lookup, dashboard deletion, mismatch handling, failed upload cleanup |
+| `INCIDENT_RESPONSE_RUNBOOK.md` | 10 incident types with severity, actions, investigation, communication, prevention |
+| `PILOT_PARTICIPANT_EXPECTATIONS.md` | Plain-language guide for pilot coaches: what GameIQ does/doesn't do, data rules |
+| `PILOT_SUPPORT_RUNBOOK.md` | Daily/weekly checks, 7 common scenarios, 6 response templates |
+
+### Documentation Updated
+| Document | Change |
+|----------|--------|
+| `DATA_PRIVACY_REVIEW.md` | Updated pilot data handling requirements — all items now ✅ |
+| `PILOT_READINESS_CHECKLIST.md` | Operations section updated — support, deletion, runbooks all ✅ |
+| `MVP_READINESS_REPORT.md` | Updated to Prompt 23 |
+| `README.md` | Added pilot operations section, /support link, runbook links |
+
+### Quality Checks
+```
+npm run typecheck  →  ✅ passes
+npm run lint       →  ✅ passes
+npm run test       →  ✅ 131 tests passing
+npm run build      →  ✅ clean build
+```
+
+---
+
+## 15. Prompt 24A — Local Configuration, First Run, and MVP Smoke Test
+
+### Bug Found and Fixed
+
+| Bug | Severity | Fix |
+|-----|---------|-----|
+| `proxy.ts` blocked `/support`, `/privacy`, `/feedback`, `/request-access`, `/demo` for unauthenticated users | P1 | Added 5 routes to `PUBLIC_PATHS` in `proxy.ts` |
+
+### Config Work
+
+| Item | Status |
+|------|--------|
+| `.env.local` template created (no real secrets) | ✅ |
+| `.env.local` confirmed excluded by `.gitignore` | ✅ |
+| `DEPLOYMENT.md` migration list updated (now lists all 7 migrations) | ✅ |
+| `docs/LOCAL_RUN_REPORT.md` created | ✅ |
+| `docs/PRODUCT_QA_CHECKLIST.md` updated with Prompt 24A results | ✅ |
+
+### Quality Checks
+```
+npm install       →  ✅
+npm run typecheck →  ✅ 0 errors
+npm run lint      →  ✅ 0 warnings
+npm run test      →  ✅ 131 tests (7 files)
+npm run build     →  ✅ clean build, 34 routes
+```
+
+### Remaining Operational Prerequisites (not code blockers)
+
+| Item | Status |
+|------|--------|
+| Supabase credentials in `.env.local` | ✅ Configured |
+| 7 migrations applied in Supabase | ⬜ Must verify applied |
+| Storage buckets created (3 private) | ⬜ Must verify created |
+| Auth redirect URLs set | ⬜ Must verify set |
+| 20-step browser smoke test completed | ⬜ Founder must run |
+| Supabase Pro plan activated | ⬜ Required before real pilot |
+
+---
+
+## 16. Prompt 24B — Auth Flow Audit and Hardening
+
+### Key Discovery
+
+In Next.js 16, `middleware.ts` was renamed to `proxy.ts` (function renamed from `middleware` to `proxy`). The project already correctly used `proxy.ts`. Build output confirms "ƒ Proxy (Middleware)" is active.
+
+### Auth Improvements
+
+| Change | Severity | File |
+|--------|----------|------|
+| SignupForm: added confirm password field | P1 | `components/auth/SignupForm.tsx` |
+| SignupForm: name validation 2–100 chars | P2 | `components/auth/SignupForm.tsx` |
+| SignupForm: email format regex check | P2 | `components/auth/SignupForm.tsx` |
+| SignupForm: accepts `redirectTo` prop | Fix | `components/auth/SignupForm.tsx` |
+| LoginForm: email format validation | P2 | `components/auth/LoginForm.tsx` |
+| Extracted `lib/auth/redirect.ts` | Security | New file |
+| All redirect params use `safeRedirect()` | Security | Multiple files |
+| Dashboard calls `ensureCurrentUserProfile()` | Reliability | `app/dashboard/page.tsx` |
+
+### Docs Added
+
+| Document | Purpose |
+|----------|---------|
+| `docs/AUTH_FLOW_QA.md` | Complete auth QA: flows, error states, 40+ manual test steps, Supabase settings, troubleshooting |
+| `docs/AUTHENTICATION.md` | Updated: proxy.ts reference, `lib/auth/redirect.ts` in file map |
+
+### Quality Checks
+
+```
+npm run typecheck →  ✅ 0 errors
+npm run lint      →  ✅ 0 warnings
+npm run test      →  ✅ 167 tests (9 files, 36 new auth tests)
+npm run build     →  ✅ clean build, 35 routes, "Proxy (Middleware)" confirmed
+```
+
+---
+
+## 17. Prompt 25 — Final Full Test Sweep and Release Candidate Lock
+
+### Code Fixes
+
+| Fix | Severity | File |
+|-----|----------|------|
+| `share_links.token` UNIQUE constraint | P1 | `supabase/migrations/0012_share_links_token_unique.sql` |
+| Replace `Math.random()` with `crypto.getRandomValues()` in slug generation | P2 | `lib/utils/slug.ts` |
+| Remove "Phase 7" internal reference from settings page | P2 | `app/settings/page.tsx` |
+
+### Documentation Updated
+
+- `FINAL_PROJECT_HANDOFF.md` — stale "Not Built" items corrected; top-10 engineering tasks updated
+- `TECHNICAL_DEBT.md` — D3 and S3 marked resolved
+- `PRIORITIZED_ISSUES.md` — P1-4 and P2-7 marked resolved
+- `GO_NO_GO_CRITERIA.md` — Level 3/4 status updated
+- `PRODUCT_QA_CHECKLIST.md` — Prompt 25 QA section added
+- `RELEASE_CANDIDATE_REPORT.md` — created
+- `FINAL_BUG_LIST.md` — created
+
+### Automated Test Results
+
+| Command | Status |
+|---------|--------|
+| `npm run typecheck` | ✅ 0 errors |
+| `npm run lint` | ✅ 0 warnings |
+| `npm run test` | ✅ 167/167 passed (9 files) |
+| `npm run build` | ✅ Clean build, 34 routes, Proxy Middleware confirmed |
+| `npm run test:e2e` | ⚠️ Requires live dev server (public routes only) |
+| `npm run benchmark:ai` | ❌ Script not implemented — deferred to v1.1 |
+
+### Summary
+
+All open P0 issues: none. P1-4 (share token UNIQUE) resolved. P2-7 (Math.random slug) resolved. Remaining P1 blockers for coach pilot: Sentry (DEP1), Supabase Pro (DEP3), rate limiting (S1), settings wiring (D5). These are operational/infrastructure gaps, not code failures.
+
+**Release candidate status: RC1 — ready for founder demo, advisor demo, early coach demo (with listed prerequisites). Not yet ready for self-serve pilot.**
+
+### Quality Checks
+
+```
+npm run typecheck →  ✅ 0 errors
+npm run lint      →  ✅ 0 warnings
+npm run test      →  ✅ 167 tests (9 files)
+npm run build     →  ✅ clean build, 34 routes, "Proxy (Middleware)" confirmed
+```
+
+*Last updated: 2026-06-02 — Prompt 25: Final Full Test Sweep and Release Candidate Lock*

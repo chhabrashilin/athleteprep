@@ -396,4 +396,174 @@ Mark items:
 
 ---
 
-*Last updated: Prompt 16 — Final QA, Security Review, and Deployment Readiness (2026-06-01)*
+---
+
+## Prompt 24A + 24B QA Results — 2026-06-02
+
+**Method:** Automated quality checks + code-review smoke test + static analysis. Supabase project is configured locally. Browser runtime testing requires founder to run manually.
+
+### Quality Gates
+
+- [x] `npm run typecheck` passes with 0 errors
+- [x] `npm run lint` passes with 0 warnings
+- [x] `npm run build` completes successfully (35 routes, "Proxy (Middleware)" confirmed active)
+- [x] `npm run test` passes (167/167 tests, 9 files)
+
+### Auth Flow (Prompt 24B fixes applied)
+
+- [x] SignupForm has confirm password field
+- [x] SignupForm validates full name: 2–100 chars
+- [x] SignupForm validates email format (regex)
+- [x] LoginForm validates email format (regex)
+- [x] `lib/auth/redirect.ts` — shared safe redirect helper, unit-tested (14 tests)
+- [x] All `redirectTo`/`next` params pass through `safeRedirect()` — external URLs rejected
+- [x] `ensureCurrentUserProfile()` called on dashboard load (profile guaranteed)
+- [x] `docs/AUTH_FLOW_QA.md` created — complete auth QA reference
+
+### Auth / Middleware (code review)
+
+- [x] `/` — public, accessible without auth
+- [x] `/auth/login`, `/auth/signup`, `/auth/error`, `/auth/callback`, `/auth/logout` — public
+- [x] `/privacy`, `/feedback`, `/request-access`, `/support`, `/demo` — public
+- [x] All other routes redirect unauthenticated users to login with `?redirectTo=`
+- [x] Open-redirect prevention — `safeRedirect()` blocks external URLs
+- [x] Auth callback handles PKCE (code exchange) and email confirmation (token_hash)
+- [x] Supabase not configured → no crash (returns null gracefully)
+- [x] Next.js 16: proxy.ts is the correct middleware file (not middleware.ts)
+
+### Security (code review)
+
+- [x] No API keys in `NEXT_PUBLIC_` variables
+- [x] `SUPABASE_SERVICE_ROLE_KEY` never in `NEXT_PUBLIC_` prefix
+- [x] Share tokens use `crypto.randomBytes(18)` — 144-bit entropy
+- [x] Revoked/expired share links return error before content
+- [x] Video never included in any share mode (`canShowVideo = false`)
+- [x] RLS enabled on all tables (confirmed in migration SQL)
+- [x] Staff role verified server-side for all writes
+- [x] Admin routes gated by `ADMIN_EMAILS` env var
+
+### Core Library Unit Tests (167 passing, 9 files)
+
+- [x] Timestamp parsing: seconds, MM:SS, H:MM:SS formats
+- [x] Timestamp formatting
+- [x] AI report schema validation (Zod)
+- [x] Report normalization (hallucination guard — unknown event IDs removed)
+- [x] Share report sanitization (all 4 visibility modes)
+- [x] Permission helpers
+- [x] Component smoke tests: ConfidenceBadge, VerificationBadge, EmptyState
+- [x] Auth redirect safety — 14 tests for `isSafeRedirect` / `safeRedirect`
+- [x] Auth validation — 22 tests for name, email, password, confirm-password
+
+### Not Tested (requires live Supabase + browser — founder must run before coach demo)
+
+- [ ] Sign up creates account + confirms profile row
+- [ ] Confirm password mismatch shows error
+- [ ] Login / logout flow
+- [ ] Dashboard loads, shows team or empty state
+- [ ] Unsafe redirect (`?redirectTo=https://evil.com`) blocked in browser
+- [ ] Team creation (RLS + RPC verification)
+- [ ] Roster CRUD
+- [ ] Game creation
+- [ ] Video upload (storage bucket)
+- [ ] Timestamp entry
+- [ ] Mock AI report generation
+- [ ] Report dashboard all sections
+- [ ] Insight verification and editing
+- [ ] Share link creation (incognito access test)
+- [ ] Export print view
+- [ ] Support form submission
+- [ ] Admin pages (analytics, feedback, support)
+- [ ] Demo workspace creation + no duplicate check
+
+**Complete browser smoke test:** See [`/docs/PRODUCTION_SMOKE_TEST.md`](PRODUCTION_SMOKE_TEST.md) and [`/docs/AUTH_FLOW_QA.md`](AUTH_FLOW_QA.md).
+
+### Deployment Fix
+
+- [x] `DEPLOYMENT.md` migration list updated — now lists all 7 migrations (0001–0011, skipping gaps)
+
+*Last updated: Prompt 24A — Local Configuration, First Run, and MVP Smoke Test (2026-06-01)*
+
+---
+
+---
+
+## Prompt 25 QA Results — 2026-06-02 (Release Candidate Lock)
+
+**Method:** Full automated sweep + code review + security audit. No new Supabase browser testing (unchanged from Prompt 24B). Fixes applied in this pass.
+
+### Quality Gates
+
+- [x] `npm run typecheck` passes with 0 errors
+- [x] `npm run lint` passes with 0 warnings
+- [x] `npm run build` completes successfully (34 routes, Proxy Middleware confirmed)
+- [x] `npm run test` passes (167/167 tests, 9 files)
+- [ ] `npm run test:e2e` — Playwright (requires running dev server; public routes only)
+- [ ] `npm run benchmark:ai` — no benchmark script exists (AI quality evaluated via mock output inspection)
+
+### Code Fixes Applied (Prompt 25)
+
+- [x] `lib/utils/slug.ts` — replaced `Math.random()` with `crypto.getRandomValues()` (P2-7 resolved)
+- [x] `supabase/migrations/0012_share_links_token_unique.sql` — added UNIQUE constraint on `share_links.token` (P1-4 resolved)
+- [x] `app/settings/page.tsx` — removed internal "Phase 7" reference from Notifications card
+
+### Documentation Updates Applied (Prompt 25)
+
+- [x] `docs/FINAL_PROJECT_HANDOFF.md` — removed stale "Not Built" items (automated tests, CI/CD now exist); updated top-10 engineering task list
+- [x] `docs/TECHNICAL_DEBT.md` — marked D3 and S3 as resolved
+- [x] `docs/PRIORITIZED_ISSUES.md` — marked P1-4 and P2-7 as resolved
+- [x] `docs/GO_NO_GO_CRITERIA.md` — updated Level 3 and Level 4 status for Prompt 25
+- [x] `docs/PRODUCT_QA_CHECKLIST.md` — this entry
+- [x] `docs/MVP_READINESS_REPORT.md` — Prompt 25 section added
+- [x] `docs/FINAL_BUG_LIST.md` — created
+- [x] `docs/RELEASE_CANDIDATE_REPORT.md` — created
+
+### Route Audit (build output confirms all 34 routes compile)
+
+- [x] `/` — public, static, confirmed
+- [x] `/auth/signup`, `/auth/login`, `/auth/callback`, `/auth/error`, `/auth/logout` — public
+- [x] `/privacy`, `/feedback`, `/support`, `/request-access` — public static pages
+- [x] `/demo`, `/demo/setup` — public (middleware patched in Prompt 24A)
+- [x] `/dashboard` — protected, redirects to login without auth
+- [x] `/teams`, `/teams/new`, `/teams/[teamId]`, `/teams/[teamId]/players`, `/teams/[teamId]/games` — protected team routes
+- [x] `/teams/[teamId]/games/[gameId]`, `/setup`, `/timestamps`, `/report`, `/report/export`, `/report/insights/[insightId]` — all compile
+- [x] `/share/reports/[token]` — public token-gated
+- [x] `/settings` — protected
+- [x] `/admin`, `/admin/analytics`, `/admin/feedback`, `/admin/support` — protected + admin-email-gated
+- [x] `app/error.tsx`, `app/not-found.tsx` — global error boundary and 404 confirmed
+
+### Security Review (code review — unchanged from Prompt 24B, confirmed)
+
+- [x] No API keys in any `NEXT_PUBLIC_` variable
+- [x] `SUPABASE_SERVICE_ROLE_KEY` server-only
+- [x] Share tokens: 144-bit entropy via `crypto.randomBytes(18)`
+- [x] `share_links.token` now has DB-level UNIQUE constraint
+- [x] Revoked/expired share links checked before content returned
+- [x] RLS on all 17 tables confirmed
+- [x] Admin routes gated by `ADMIN_EMAILS` + authenticated user check
+- [x] Video never exposed in any share mode (`canShowVideo = false`)
+- [x] Safe redirect: `isSafeRedirect()` blocks external URLs in proxy and auth callback
+- [x] Slug suffix: now uses `crypto.getRandomValues()` instead of `Math.random()`
+
+### UX Honesty Review
+
+- [x] Landing page MVP honesty section explicitly disclaims: no frame analysis, no player/ball tracking
+- [x] `AssumptionsLimitationsCard` shows limitations in every report
+- [x] `ReportOverview` correctly references "computer vision" as roadmap only
+- [x] No overclaims found in source or marketing components
+- [x] Settings "Phase 7" internal reference removed
+
+### AI Safety Review
+
+- [x] Mock AI output: structured, evidence-linked, no hallucinated IDs (verified via tests)
+- [x] Zod validation rejects malformed AI outputs before storage
+- [x] System prompt enforces 14 guardrails (no invented IDs, no frame analysis claims)
+- [x] `normalize-generated-report.ts`: removes evidence_ids that don't map to real events
+- [x] Assumptions & limitations always included in report output
+- [x] No injury diagnosis, no offensive player judgments in mock output
+- [ ] `benchmark:ai` script — not implemented; deferred to v1.1
+
+### Remaining Not Tested (requires live Supabase + browser)
+
+Same as Prompt 24B — see "Not Tested" section above. Founder must run production smoke test before coach demo.
+
+*Last updated: 2026-06-02 — Prompt 25: Final Full Test Sweep and Release Candidate Lock*
