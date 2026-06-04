@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/Badge";
 import { TeamEmptyState } from "@/components/teams/TeamEmptyState";
 import { TeamSummaryGrid } from "@/components/dashboard/TeamSummaryGrid";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
-import { Film, Plus, BarChart3, ArrowRight, Zap } from "lucide-react";
+import { Film, Plus, BarChart3, ArrowRight, Zap, Trophy } from "lucide-react";
 import { getServerUser } from "@/lib/supabase/server";
+import { isCricketEnabled } from "@/lib/config/feature-flags";
 import { ensureCurrentUserProfile } from "@/lib/db/profiles";
 import { getTeamsWithMembershipForCurrentUser } from "@/lib/db/teams";
 import { getPlayerCountsForTeams } from "@/lib/db/players";
@@ -51,6 +52,7 @@ export default async function DashboardPage() {
   const hasPlayers = Object.values(playerCounts).some((c) => c.total > 0);
   const hasGames   = Object.values(gameCounts).some((c) => c.total > 0);
   const showDemoCta = process.env.NEXT_PUBLIC_ENABLE_MOCK_DATA === "true" && !hasTeam;
+  const showCricketHubCta = isCricketEnabled();
 
   return (
     <AppShell>
@@ -97,6 +99,27 @@ export default async function DashboardPage() {
           <Link href="/demo/setup" className="shrink-0">
             <Button size="sm" variant="secondary">
               Set up demo
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Cricket Hub nudge */}
+      {showCricketHubCta && (
+        <div className="mb-6 flex items-start gap-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15">
+            <Trophy className="h-4 w-4 text-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-emerald-400 mb-0.5">Using GameIQ for cricket?</p>
+            <p className="text-sm text-slate-400">
+              The Cricket Hub is ready — leagues, teams, players, matches, and more.
+            </p>
+          </div>
+          <Link href="/cricket" className="shrink-0">
+            <Button size="sm" variant="secondary">
+              Open Cricket Hub
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>

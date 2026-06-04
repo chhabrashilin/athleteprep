@@ -25,6 +25,7 @@ GameIQ uses **Supabase Auth** (email + password) managed by `@supabase/ssr`. Ses
 | `app/auth/login/page.tsx` | Login page (server, redirects if already authed) |
 | `components/auth/LoginForm.tsx` | Login form (client) |
 | `app/auth/callback/route.ts` | OAuth / email-confirmation callback handler |
+| `app/auth/confirm/page.tsx` | Client-side handler for implicit hash-fragment flow |
 | `app/auth/logout/route.ts` | GET logout — signs out and redirects to `/` |
 | `app/auth/error/page.tsx` | Auth error display |
 | `app/dashboard/page.tsx` | First authenticated landing; calls `ensureCurrentUserProfile()` |
@@ -40,6 +41,7 @@ GameIQ uses **Supabase Auth** (email + password) managed by `@supabase/ssr`. Ses
 /auth/login
 /auth/signup
 /auth/callback
+/auth/confirm
 /auth/logout
 /auth/error
 /privacy
@@ -141,18 +143,26 @@ Test: `tests/unit/auth-redirect.test.ts`
 
 ## 7. Callback / Email Confirmation Flow
 
-Route: `/auth/callback`
+Route: `/auth/callback` (server-side Route Handler)  
+Fallback: `/auth/confirm` (client-side page)
 
-Handles two cases:
+Handles three formats:
 
-1. **Token hash** (`token_hash` + `type` params) — email confirmation and password recovery links.
-2. **PKCE code** (`code` param) — OAuth exchanges.
+| Format | Params | Handler |
+|--------|--------|---------|
+| PKCE code flow | `?code=...` | `supabase.auth.exchangeCodeForSession(code)` |
+| Email OTP flow | `?token_hash=...&type=...` | `supabase.auth.verifyOtp(...)` |
+| Implicit hash flow | `#access_token=...` (hash) | Client-side `getSession()` at `/auth/confirm` |
+
+The implicit hash flow (Case 3) is invisible to the server. The callback route detects no params and redirects to `/auth/confirm?next=<path>`. The client page calls `supabase.auth.getSession()`, which the browser Supabase client resolves from the hash fragment automatically.
+
+Both `next` and `redirectTo` are accepted as the destination param; both are sanitised via `safeRedirect()`.
 
 On success → redirect to `safeRedirect(next)` (defaults to `/dashboard`).
 
-On failure → redirect to `/auth/error?message=<reason>`.
+On failure → friendly error with links to sign up / sign in.
 
-The `next` parameter is sanitized by `safeRedirect()` — external URLs are blocked.
+See `docs/ERROR_FIX_LOG.md` → Error 001 for the full root cause and fix history.
 
 ---
 
@@ -307,8 +317,21 @@ Check that `proxy.ts` is correctly allowing `/auth/*` paths. The `PUBLIC_PREFIXE
 ### Protected route accessible without auth
 Verify `proxy.ts` is at the project root and exports `proxy` (not `middleware` — this was renamed in Next.js 16).
 
-### Callback returning "Missing authentication parameters"
-The email confirmation link may have expired or the URL parameters were mangled. Try signing up again and clicking the link promptly.
+### Callback redirecting to /auth/confirm and showing "Confirmation failed"
+The implicit hash flow is in use but no session was found in the hash. Causes:
+- Link expired (Supabase tokens expire after 24 hours by default)
+- Link already used (OTP tokens are single-use)
+- User opened the link in a different browser than the PKCE code_verifier was stored in
+
+**Best fix:** Change the Supabase email template to use the token_hash format:
+```
+{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email
+```
+This makes the confirmation fully server-side and independent of browser state.
+See `/docs/SUPABASE_SETUP.md` → Section 5 for step-by-step instructions.
+
+### Callback returning "Missing authentication parameters" (old message, now fixed)
+This error no longer appears for the implicit hash flow (fixed 2026-06-02). If you see it, check that `/auth/callback` is in Supabase's allowed Redirect URLs and that the Site URL is set correctly.
 
 ### "Email not confirmed" on login
 Email confirmations are enabled in Supabase. Either confirm via email, or disable confirmations in Supabase dashboard for development.

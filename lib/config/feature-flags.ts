@@ -12,16 +12,27 @@
  *   - Founder analytics: ON for admin users (gated separately by ADMIN_EMAILS)
  *   - Public feedback:  ON (coaches and visitors can submit feedback)
  *   - Pilot mode:       ON when NEXT_PUBLIC_PILOT_MODE=true
+ *   - Multi-sport:      ON — shows sport selection and sport registry
+ *   - Cricket:          ON — enables Cricket Hub and foundation routes
+ *   - Cricket sub-features: OFF — enabled per-module as each ships
  *
  * Usage:
  *   import { flags } from "@/lib/config/feature-flags";
  *   if (flags.enableMockData) { ... }
+ *
+ *   // Named function exports (for cricket flags):
+ *   import { isCricketEnabled } from "@/lib/config/feature-flags";
  */
 
-function boolFlag(envVar: string, fallback = false): boolean {
+export function getFeatureFlag(envVar: string, fallback = false): boolean {
   const val = process.env[envVar];
   if (val === undefined) return fallback;
   return val === "true";
+}
+
+// Kept as internal alias so existing callers of boolFlag-style logic still work.
+function boolFlag(envVar: string, fallback = false): boolean {
+  return getFeatureFlag(envVar, fallback);
 }
 
 export interface FeatureFlags {
@@ -67,6 +78,30 @@ export interface FeatureFlags {
    * pilot sessions to set expectations proactively.
    */
   enablePilotMode: boolean;
+
+  /** Enable multi-sport platform mode: sport selection page and sport registry. */
+  multiSportEnabled: boolean;
+
+  /** Enable the Cricket Hub (/cricket) and all cricket foundation routes. */
+  cricketEnabled: boolean;
+
+  /** Cricket social/community feed — not yet implemented. */
+  cricketSocialEnabled: boolean;
+
+  /** Cricket live streaming overlay integration — not yet implemented. */
+  cricketStreamingEnabled: boolean;
+
+  /** Cricket equipment/merchandise marketplace — not yet implemented. */
+  cricketMarketplaceEnabled: boolean;
+
+  /** Cricket news, trivia, and polls — not yet implemented. */
+  cricketNewsEnabled: boolean;
+
+  /** Ball-by-ball live scoring interface — not yet implemented. */
+  cricketLiveScoringEnabled: boolean;
+
+  /** Advanced analytics: wagon wheel, Manhattan graph, worm chart — not yet implemented. */
+  cricketAdvancedAnalyticsEnabled: boolean;
 }
 
 export const flags: FeatureFlags = {
@@ -76,9 +111,21 @@ export const flags: FeatureFlags = {
   enableFounderAnalytics: boolFlag("NEXT_PUBLIC_ENABLE_FOUNDER_ANALYTICS", true),
   enablePublicFeedback: boolFlag("NEXT_PUBLIC_ENABLE_PUBLIC_FEEDBACK", true),
   enablePilotMode: boolFlag("NEXT_PUBLIC_PILOT_MODE", false),
+  multiSportEnabled: boolFlag("NEXT_PUBLIC_MULTI_SPORT_ENABLED", true),
+  cricketEnabled: boolFlag("NEXT_PUBLIC_CRICKET_ENABLED", true),
+  cricketSocialEnabled: boolFlag("NEXT_PUBLIC_CRICKET_SOCIAL_ENABLED", false),
+  cricketStreamingEnabled: boolFlag("NEXT_PUBLIC_CRICKET_STREAMING_ENABLED", false),
+  cricketMarketplaceEnabled: boolFlag("NEXT_PUBLIC_CRICKET_MARKETPLACE_ENABLED", false),
+  cricketNewsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_NEWS_ENABLED", false),
+  cricketLiveScoringEnabled: boolFlag("NEXT_PUBLIC_CRICKET_LIVE_SCORING_ENABLED", false),
+  cricketAdvancedAnalyticsEnabled: boolFlag(
+    "NEXT_PUBLIC_CRICKET_ADVANCED_ANALYTICS_ENABLED",
+    false
+  ),
 };
 
-// Named re-exports for convenient destructuring
+// ─── Named re-exports (existing flags) ────────────────────────────────────────
+
 export const {
   enableMockData,
   enableRealAI,
@@ -87,3 +134,38 @@ export const {
   enablePublicFeedback,
   enablePilotMode,
 } = flags;
+
+// ─── Named function exports (cricket flags) ────────────────────────────────────
+// These wrap the flags object so they are tree-shakeable and easy to mock in tests.
+
+export function isMultiSportEnabled(): boolean {
+  return flags.multiSportEnabled;
+}
+
+export function isCricketEnabled(): boolean {
+  return flags.cricketEnabled;
+}
+
+export function isCricketSocialEnabled(): boolean {
+  return flags.cricketSocialEnabled;
+}
+
+export function isCricketStreamingEnabled(): boolean {
+  return flags.cricketStreamingEnabled;
+}
+
+export function isCricketMarketplaceEnabled(): boolean {
+  return flags.cricketMarketplaceEnabled;
+}
+
+export function isCricketNewsEnabled(): boolean {
+  return flags.cricketNewsEnabled;
+}
+
+export function isCricketLiveScoringEnabled(): boolean {
+  return flags.cricketLiveScoringEnabled;
+}
+
+export function isCricketAdvancedAnalyticsEnabled(): boolean {
+  return flags.cricketAdvancedAnalyticsEnabled;
+}

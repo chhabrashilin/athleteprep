@@ -3,27 +3,21 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { safeRedirect } from "@/lib/auth/redirect";
 
-/**
- * Handles Supabase auth callbacks:
- * - Email confirmation links (contains token_hash + type)
- * - OAuth redirects (contains code, used for PKCE exchange)
- *
- * After a successful exchange, redirects to `next` param or /dashboard.
- * On failure, redirects to /auth/error.
- */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
-  const safeNext = safeRedirect(searchParams.get("next"));
+  // Accept both "next" and "redirectTo" so either param name works.
+  const nextParam = searchParams.get("next") ?? searchParams.get("redirectTo");
+  const safeNext = safeRedirect(nextParam);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     return NextResponse.redirect(
-      `${origin}/auth/error?message=Supabase is not configured`
+      `${origin}/auth/error?message=${encodeURIComponent("Supabase is not configured. Contact support.")}`
     );
   }
 
@@ -42,32 +36,40 @@ export async function GET(request: Request) {
     },
   });
 
-  // PKCE code exchange (OAuth, magic link with PKCE)
+  // Case A: PKCE code flow (OAuth, email confirmation via PKCE)
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${safeNext}`);
     }
     return NextResponse.redirect(
-      `${origin}/auth/error?message=Could not authenticate user`
+      `${origin}/auth/error?message=${encodeURIComponent(
+        "We could not verify your account. The confirmation link may have expired — please sign up or sign in again."
+      )}`
     );
   }
 
-  // Token hash verification (email confirmation, password recovery)
+  // Case B: Email OTP / token_hash flow (email confirmation, password recovery)
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: type as "email" | "recovery" | "invite",
+      type: type as "email" | "recovery" | "invite" | "magiclink" | "email_change",
     });
     if (!error) {
       return NextResponse.redirect(`${origin}${safeNext}`);
     }
     return NextResponse.redirect(
-      `${origin}/auth/error?message=Verification link is invalid or expired`
+      `${origin}/auth/error?message=${encodeURIComponent(
+        "Your verification link is invalid or has expired. Please sign up again or request a new link."
+      )}`
     );
   }
 
-  return NextResponse.redirect(
-    `${origin}/auth/error?message=Missing authentication parameters`
-  );
+  // Case C: No server-visible params — Supabase may have redirected with a
+  // hash fragment (#access_token=...) that only the browser can read.
+  // Delegate to the client-side confirm page which calls getSession() to
+  // process the hash automatically.
+  const confirmUrl = new URL(`${origin}/auth/confirm`);
+  confirmUrl.searchParams.set("next", safeNext);
+  return NextResponse.redirect(confirmUrl.toString());
 }

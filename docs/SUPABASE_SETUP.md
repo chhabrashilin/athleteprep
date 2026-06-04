@@ -149,9 +149,55 @@ Supabase enables email/password auth by default. No changes required for v1.
 3. Set the **Site URL** to your deployed URL (e.g., `https://yourdomain.com`).
 4. For local development, add `http://localhost:3000` to **Additional Redirect URLs**.
 
+### URL Configuration (required for email confirmation to work)
+
+1. Go to **Authentication → URL Configuration**.
+2. Set **Site URL**:
+   - Local: `http://localhost:3000`
+   - Production: `https://yourdomain.com`
+3. Add to **Redirect URLs** (one per line):
+   ```
+   http://localhost:3000/auth/callback
+   http://localhost:3000/auth/confirm
+   http://localhost:3000/**
+   https://yourdomain.com/auth/callback
+   https://yourdomain.com/auth/confirm
+   https://yourdomain.com/**
+   ```
+
+### Email Template Configuration (strongly recommended)
+
+By default, Supabase uses `{{ .ConfirmationURL }}` in the "Confirm signup" email. This URL routes through Supabase's servers and redirects back to your app using either:
+- A PKCE `?code=...` param (if PKCE is enabled and the user opens in the same browser)
+- A hash fragment `#access_token=...` (implicit flow)
+
+The hash fragment is invisible to the server-side callback route. To avoid this class of problem entirely, change the email template to use the **token_hash** format, which is always server-visible.
+
+**Steps:**
+
+1. Go to **Authentication → Email Templates → Confirm signup**.
+2. Replace the `{{ .ConfirmationURL }}` link in the template body with:
+   ```
+   {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email
+   ```
+
+   Example full template body:
+   ```html
+   <p>Follow this link to confirm your email:</p>
+   <p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Confirm your email</a></p>
+   ```
+
+3. Click **Save**.
+
+This makes email confirmation fully server-side (Case B in the callback route), independent of browser cookies or PKCE state.
+
+> **Note:** The `{{ .TokenHash }}` format is a Supabase-managed signed token. It expires after 24 hours and is single-use. This is the recommended format for all new projects.
+
 ### Auth Trigger
 
 The `on_auth_user_created` trigger (defined in the migration) automatically creates a `profiles` row when a new user signs up. No manual action needed.
+
+The dashboard (`app/dashboard/page.tsx`) also calls `ensureCurrentUserProfile()` as a fallback in case the trigger races or fails.
 
 ---
 
