@@ -5,8 +5,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { User, Shield, Bell, Key, TrendingUp, MessageSquare } from "lucide-react";
+import { User, Shield, Bell, Key, TrendingUp, MessageSquare, Layers } from "lucide-react";
 import { getServerUser } from "@/lib/supabase/server";
+import { getUserSportPreference } from "@/lib/sports/preferences.server";
+import { SportPreferenceCard } from "@/components/settings/SportPreferenceCard";
+import type { SportSlug } from "@/lib/sports/registry";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -19,6 +22,11 @@ export default async function SettingsPage() {
   const user = await getServerUser();
   const adminEmails = getAdminEmails();
   const isAdmin = adminEmails.length > 0 && adminEmails.includes(user?.email?.toLowerCase() ?? "");
+
+  // Read persisted sport preference — falls back to "general" for new users.
+  const remoteSport: SportSlug = user
+    ? (await getUserSportPreference(user.id)) ?? "general"
+    : "general";
 
   return (
     <AppShell>
@@ -43,6 +51,35 @@ export default async function SettingsPage() {
             <Button variant="secondary" size="sm" className="self-start" disabled>
               Update profile
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Sport preference */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-sky-400" />
+              Sport preference
+            </CardTitle>
+            <CardDescription>
+              Choose which sport hub GameIQ shows by default. You can switch at any time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {user ? (
+              <SportPreferenceCard currentSport={remoteSport} />
+            ) : (
+              <p className="text-sm text-slate-400">
+                <Link href="/auth/login" className="text-sky-400 hover:underline">
+                  Sign in
+                </Link>{" "}
+                to save your sport preference across devices. You can still choose a sport on the{" "}
+                <Link href="/select-sport" className="text-sky-400 hover:underline">
+                  sport selection page
+                </Link>
+                .
+              </p>
+            )}
           </CardContent>
         </Card>
 

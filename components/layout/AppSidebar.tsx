@@ -12,7 +12,9 @@ import {
   Zap,
   LogOut,
   Plus,
+  Layers,
 } from "lucide-react";
+import { isMultiSportEnabled } from "@/lib/config/feature-flags";
 import type { User } from "@supabase/supabase-js";
 import type { TeamContext } from "./AppShell";
 
@@ -24,7 +26,7 @@ interface NavItem {
 }
 
 function buildGeneralNav(): NavItem[] {
-  return [
+  const items: NavItem[] = [
     {
       label: "Dashboard",
       href: "/dashboard",
@@ -36,12 +38,23 @@ function buildGeneralNav(): NavItem[] {
       href: "/teams",
       icon: <Users className="h-4 w-4" />,
     },
-    {
-      label: "Settings",
-      href: "/settings",
-      icon: <Settings className="h-4 w-4" />,
-    },
   ];
+
+  if (isMultiSportEnabled()) {
+    items.push({
+      label: "Switch sport",
+      href: "/select-sport",
+      icon: <Layers className="h-4 w-4" />,
+    });
+  }
+
+  items.push({
+    label: "Settings",
+    href: "/settings",
+    icon: <Settings className="h-4 w-4" />,
+  });
+
+  return items;
 }
 
 function buildTeamNav(teamId: string): NavItem[] {

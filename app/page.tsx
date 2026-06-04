@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, ArrowRight, MessageSquare } from "lucide-react";
+import { Zap, ArrowRight, MessageSquare, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { ProblemSection } from "@/components/landing/ProblemSection";
@@ -27,6 +27,10 @@ export default async function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-3">
+            <Link href="/select-sport" className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors">
+              <ChevronRight className="h-3 w-3" />
+              Choose sport
+            </Link>
             <Link href="/demo">
               <Button variant="ghost" size="sm">Demo</Button>
             </Link>

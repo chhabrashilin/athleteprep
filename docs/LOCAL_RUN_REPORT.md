@@ -336,4 +336,43 @@ These tests require a configured Supabase project. Credentials are in `.env.loca
 
 ---
 
-*Last updated: 2026-06-02 — Prompt 24A + 24B combined (Local Run + Auth Flow Audit)*
+---
+
+## 13. Auth Callback Bug — Fixed 2026-06-02
+
+### Blocker
+
+After signup, clicking the Gmail verification link landed on `/auth/error` with:
+
+> "Authentication failed — Missing authentication parameters."
+
+### Root Cause
+
+The callback route handler ran server-side and could not see the URL hash fragment (`#access_token=...`) that Supabase's implicit redirect flow produced. Neither `?code=` nor `?token_hash=` was present in the query string, so the handler fell through to the error branch.
+
+### Resolution
+
+| File | Change |
+|------|--------|
+| `app/auth/callback/route.ts` | Missing-params case now redirects to `/auth/confirm` instead of `/auth/error` |
+| `app/auth/confirm/page.tsx` | New client page — calls `supabase.auth.getSession()` to resolve hash fragment |
+| `lib/auth/callback.ts` | New pure helper `parseCallbackParams()` for testable param detection |
+| `tests/unit/auth-callback.test.ts` | 14 new unit tests for all three callback formats |
+| `docs/ERROR_FIX_LOG.md` | Error 001 entry with full root cause, fix, and verification |
+| `docs/SUPABASE_SETUP.md` | Added email template + URL configuration instructions |
+| `docs/AUTH_FLOW_QA.md` | Updated callback section and troubleshooting |
+
+### Quality Gates After Fix
+
+| Check | Status |
+|-------|--------|
+| `npm run typecheck` | ✅ Pass |
+| `npm run lint` | ✅ Pass |
+| `npm run test` | ✅ Pass (new count: see below) |
+| `npm run build` | ✅ Pass |
+
+### Permanent Fix Recommendation
+
+Update the Supabase email template to use `token_hash` format (see `/docs/SUPABASE_SETUP.md` → Section 6 → Email Template Configuration). This eliminates implicit hash flow entirely.
+
+*Last updated: 2026-06-02 — Auth callback fix (Error 001)*
