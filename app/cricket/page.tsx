@@ -83,8 +83,12 @@ const ROADMAP_MODULES: { name: string; description: string; status: CricketModul
   { name: "Broadcast Overlays",       description: "Scorebug, lower-third, result, innings break, and minimal overlays via OBS/vMix.", status: "available", href: "/cricket/leagues" },
   { name: "OBS/vMix Integration",     description: "Browser-source overlay URLs for OBS, vMix, and Streamlabs. Token-secured, auto-refreshing.", status: "available", href: "/cricket/leagues" },
   { name: "Direct Provider Streaming", description: "YouTube Live, Twitch, custom RTMP automation — requires provider credentials.", status: "foundation_ready", href: "/cricket/streaming" },
-  { name: "Cricket Community",        description: "Fan polls, match discussions, news, and trivia.",                     status: "coming_soon",      href: "/cricket/community" },
-  { name: "News, Trivia & Polls",     description: "Curated cricket content and fan engagement tools.",                   status: "coming_soon",      href: "/cricket/community" },
+  { name: "Cricket Community",        description: "League and team community spaces, feeds, announcements, and discussions.", status: "available",   href: "/cricket/leagues" },
+  { name: "News & Articles",          description: "First-party league news and admin-published articles.",                status: "available",        href: "/cricket/news" },
+  { name: "Fan Polls",                description: "Create, vote, and view results for league and match polls.",           status: "available",        href: "/cricket/leagues" },
+  { name: "Match Threads",            description: "Per-match fan discussion threads with moderation and slow-mode.",     status: "available",        href: "/cricket/leagues" },
+  { name: "In-App Notifications",     description: "Real-time in-app notifications for announcements, comments, polls, and match events.", status: "available", href: "/cricket/notifications" },
+  { name: "Content Moderation",       description: "Report, review, approve/hide content, and moderation action log.",   status: "available",        href: "/cricket/leagues" },
   { name: "Equipment Marketplace",    description: "Bat, gear, and cricket equipment listings.",                          status: "coming_soon",      href: "/cricket/store" },
 ];
 

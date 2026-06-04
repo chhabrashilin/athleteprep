@@ -44,7 +44,7 @@ export async function createCricketCommunitySpace(
 
   const parsed = createCommunitySpaceSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -79,7 +79,7 @@ export async function updateCricketCommunitySpace(
 
   const parsed = updateCommunitySpaceSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -118,7 +118,7 @@ export async function createCricketPost(input: unknown): Promise<ActionResult<{ 
 
   const parsed = createPostSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -241,7 +241,7 @@ export async function updateCricketPost(
 
   const parsed = updatePostSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -371,7 +371,7 @@ export async function createCricketComment(
 
   const parsed = createCommentSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -433,7 +433,7 @@ export async function updateCricketComment(
 
   const parsed = updateCommentSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -495,7 +495,7 @@ export async function reactToCricketTarget(input: unknown): Promise<ActionResult
 
   const parsed = reactionSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -518,7 +518,7 @@ export async function removeCricketReaction(input: unknown): Promise<ActionResul
 
   const parsed = reactionSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -544,7 +544,7 @@ export async function followCricketTarget(input: unknown): Promise<ActionResult>
 
   const parsed = followSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -566,7 +566,7 @@ export async function unfollowCricketTarget(input: unknown): Promise<ActionResul
 
   const parsed = followSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();

@@ -14,7 +14,6 @@ import {
   detectPotentiallyUnsafeContent,
   normalizePostBody,
 } from "@/lib/cricket/community/safety";
-import { createCricketNotification } from "@/lib/cricket/notifications/actions";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -90,7 +89,7 @@ export async function postMatchThreadMessage(
 
   const parsed = createThreadMessageSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -145,7 +144,7 @@ export async function editMatchThreadMessage(
 
   const parsed = updateThreadMessageSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();

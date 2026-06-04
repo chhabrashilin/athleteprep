@@ -97,7 +97,7 @@ export interface PollResults {
 export function calculatePollResults(
   options: Array<{ id: string; option_text: string; sort_order: number }>,
   votes: Array<{ option_id: string }>,
-  userVoteOptionIds: string[]
+  _userVoteOptionIds: string[]
 ): PollOptionResult[] {
   const total = votes.length;
   const countMap = new Map<string, number>();

@@ -9,8 +9,6 @@
 import { createServerSupabaseClient, getServerUser } from "@/lib/supabase/server";
 import {
   createReportSchema,
-  resolveReportSchema,
-  dismissReportSchema,
   moderationActionSchema,
 } from "@/lib/cricket/validation/moderation";
 
@@ -71,7 +69,7 @@ export async function reportCricketContent(input: unknown): Promise<ActionResult
 
   const parsed = createReportSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -183,7 +181,7 @@ export async function dismissCricketReport(
 export async function moderateCricketContent(input: unknown): Promise<ActionResult> {
   const parsed = moderationActionSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const auth = await requireModerator(parsed.data.league_id ?? null);

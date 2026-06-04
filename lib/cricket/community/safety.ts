@@ -168,12 +168,11 @@ export function shouldRequirePreModeration(
     reasons.push(...contentSafetyResult.reasons);
   }
 
-  // Admins and moderators bypass pre-moderation.
+  // Admins and moderators bypass pre-moderation (blocked content is already returned above).
   if (
     authorRole &&
     ["owner", "admin", "manager", "moderator"].includes(authorRole) &&
-    reasons.length > 0 &&
-    contentSafetyResult.status !== "blocked"
+    reasons.length > 0
   ) {
     requiresPreModeration = false;
     reasons.length = 0;

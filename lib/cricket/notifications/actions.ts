@@ -24,7 +24,7 @@ export async function createCricketNotification(
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createNotificationSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid notification" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid notification" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -74,13 +74,12 @@ export async function createBulkCricketNotifications(
     metadata: d.metadata ?? {},
   }));
 
-  const { error, count } = await supabase
+  const { error } = await supabase
     .from("cricket_notifications")
-    .insert(rows)
-    .select("id", { count: "exact", head: true });
+    .insert(rows);
 
   if (error) return { success: false, error: "Failed to create notifications" };
-  return { success: true, data: { count: count ?? inputs.length } };
+  return { success: true, data: { count: inputs.length } };
 }
 
 export async function markCricketNotificationRead(

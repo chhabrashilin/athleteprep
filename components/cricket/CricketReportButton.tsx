@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Flag } from "lucide-react";
 import { reportCricketContent } from "@/lib/cricket/moderation/actions";
-import type { ReportTargetType } from "@/lib/cricket/validation/moderation";
 
 const REPORT_TARGET_TYPES = [
   "post",

@@ -1447,3 +1447,110 @@ Then test broadcast control room, overlay tokens, and OBS browser-source overlay
 
 Prompt 37 — Cricket Community, News, Polls, Match Threads, and Fan Engagement
 
+---
+
+# Prompt 37 — Cricket Community, Fan Engagement, and In-App Notifications
+
+## What Was Added
+
+### Community Infrastructure
+- **Community spaces** (`cricket_community_spaces`): league, team, and match spaces with configurable visibility, posting/commenting policies, and moderation policies.
+- **Posts** (`cricket_posts`): announcements, news, articles, match updates, and general posts with moderation status, pinning, and visibility controls.
+- **Comments** (`cricket_comments`): threaded comments with parent support, moderation, and soft-delete.
+- **Reactions** (`cricket_reactions`): 6 reaction types (like, love, clap, fire, wow, support) on posts, comments, matches, players, and teams.
+- **Follows** (`cricket_follows`): users can follow leagues, teams, players, and matches to receive notifications.
+
+### Polls
+- **Cricket polls** (`cricket_polls`, `cricket_poll_options`, `cricket_poll_votes`): fan polls with single/multiple choice, vote change support, configurable close dates, and per-visibility results.
+
+### Match Threads
+- **Match threads** (`cricket_match_threads`): per-match discussion threads with slow mode, pinned messages, and lock/unlock.
+- **Thread messages** (`cricket_match_thread_messages`): real-time fan messages with system/admin notice types and moderation.
+
+### Moderation
+- **Reports** (`cricket_reports`): users can report posts, comments, thread messages, polls, and profiles.
+- **Moderation actions** (`cricket_moderation_actions`): full audit log of approve/reject/hide/restore/pin/lock actions.
+- Moderation dashboard at `/cricket/leagues/[slug]/moderation`.
+
+### In-App Notifications
+- **Notifications** (`cricket_notifications`): persisted in Supabase. No external provider required.
+- Events: announcement created, post commented, comment replied, poll created/closed, match live, result posted, broadcast live, report resolved, role invited.
+- Real-time bell counter via Supabase Realtime with polling fallback.
+
+### Content Safety
+- `lib/cricket/community/safety.ts`: deterministic HTML stripping, spam detection, link-count checking, pre-moderation policy evaluation, payload sanitization, and excerpt builder. No external services required.
+
+---
+
+## New Migration
+
+`supabase/migrations/0023_cricket_community_engagement.sql`
+
+Tables: `cricket_community_spaces`, `cricket_posts`, `cricket_comments`, `cricket_reactions`, `cricket_polls`, `cricket_poll_options`, `cricket_poll_votes`, `cricket_match_threads`, `cricket_match_thread_messages`, `cricket_reports`, `cricket_moderation_actions`, `cricket_notifications`, `cricket_follows`.
+
+SQL helpers: `user_can_view_cricket_space`, `user_can_post_in_cricket_space`, `user_can_comment_in_cricket_space`, `user_can_moderate_cricket_league`, `user_is_cricket_league_member`, `user_is_cricket_team_member`, `user_can_view_cricket_match_thread`, `user_can_vote_in_cricket_poll`.
+
+RLS enabled on all 13 new tables.
+
+---
+
+## New Routes
+
+| Route | Description |
+|---|---|
+| `/cricket/leagues/[slug]/community` | League community feed, announcements, polls, composer |
+| `/cricket/leagues/[slug]/polls` | League polls with vote/results |
+| `/cricket/leagues/[slug]/moderation` | Moderation dashboard (admins/managers only) |
+| `/cricket/teams/[teamSlug]/community` | Team community feed |
+| `/cricket/matches/[matchSlugOrId]/thread` | Match fan discussion thread |
+| `/cricket/matches/[matchSlugOrId]/fan` | Fan match center (live score + thread + polls) |
+| `/cricket/matches/[matchSlugOrId]/polls` | Match-specific polls |
+| `/cricket/news` | First-party news/articles feed |
+| `/cricket/news/[postIdOrSlug]` | Article detail with comments |
+| `/cricket/notifications` | In-app notification center |
+
+---
+
+## Privacy Rules
+
+- Private league community stays private — all RLS policies check league membership before exposing content.
+- Team-only spaces require team membership or league moderator role.
+- Public content only public when `visibility = 'public'`.
+- Notifications visible only to recipient.
+- Individual poll voter identities not exposed publicly.
+
+---
+
+## Moderation Workflow
+
+1. User submits report → stored in `cricket_reports` with status `open`.
+2. League admin opens `/cricket/leagues/[slug]/moderation?section=reports`.
+3. Admin reviews, resolves (hides/restores content), or dismisses.
+4. All actions logged in `cricket_moderation_actions`.
+
+---
+
+## Known Limitations
+
+- No private direct messages — deferred to a future prompt.
+- No external news ingestion by default.
+- No email/push unless provider configured.
+- No marketplace — deferred to Prompt 38.
+
+---
+
+## Operator Next Steps
+
+```
+npx supabase db push
+npm run dev
+```
+
+Then test league community, match threads, polls, notification center, and moderation dashboard.
+
+---
+
+## Next Prompt
+
+Prompt 38 — Cricket Equipment Marketplace, Team Kit Orders, Sponsorship Inventory, and Commerce Foundation
+

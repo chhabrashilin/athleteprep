@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const {z} = require\\('zod'\\); console.log\\(z.string\\(\\).datetime.toString\\(\\).slice\\(0,100\\)\\)\")"
+    ]
+  }
+}

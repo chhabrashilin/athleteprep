@@ -7,7 +7,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   calculatePollResults,
   type PollResults,
-  type PollOptionResult,
 } from "@/lib/cricket/validation/polls";
 
 export interface CricketPoll {
@@ -159,7 +158,12 @@ export async function getPollResults(
     ? votes.filter((v) => v.user_id === userId).map((v) => v.option_id)
     : [];
 
-  const results = calculatePollResults(options, votes, userVoteOptionIds);
+  const optionsForCalc = options.map((o) => ({
+    id: o.id,
+    option_text: o.optionText,
+    sort_order: o.sortOrder,
+  }));
+  const results = calculatePollResults(optionsForCalc, votes, userVoteOptionIds);
 
   return {
     poll_id: pollId,

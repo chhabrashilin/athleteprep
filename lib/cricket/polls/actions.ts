@@ -24,7 +24,7 @@ export async function createCricketPoll(
 
   const parsed = createPollSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -122,7 +122,7 @@ export async function voteInCricketPoll(
 
   const parsed = pollVoteSchema.safeParse({ poll_id: pollId, option_ids: optionIds });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createServerSupabaseClient();

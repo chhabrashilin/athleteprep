@@ -40,7 +40,7 @@ export const createNotificationSchema = z.object({
     .refine((v) => !v || v.startsWith("/") || v.startsWith("http"), {
       message: "action_url must be a relative path or absolute URL",
     }),
-  metadata: z.record(z.unknown()).optional().default({}),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateNotificationInput = z.infer<typeof createNotificationSchema>;
