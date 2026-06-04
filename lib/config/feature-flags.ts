@@ -88,8 +88,11 @@ export interface FeatureFlags {
   /** Cricket social/community feed — not yet implemented. */
   cricketSocialEnabled: boolean;
 
-  /** Cricket live streaming overlay integration — not yet implemented. */
+  /** Cricket live streaming overlay integration. */
   cricketStreamingEnabled: boolean;
+
+  /** Cricket broadcast overlay system (OBS/vMix browser sources). */
+  cricketBroadcastOverlaysEnabled: boolean;
 
   /** Cricket equipment/merchandise marketplace — not yet implemented. */
   cricketMarketplaceEnabled: boolean;
@@ -102,6 +105,20 @@ export interface FeatureFlags {
 
   /** Advanced analytics: wagon wheel, Manhattan graph, worm chart — not yet implemented. */
   cricketAdvancedAnalyticsEnabled: boolean;
+
+  // ─── Prompt 37 — Community & Fan Engagement ─────────────────────────────────
+
+  /** Community spaces, posts, comments, reactions, announcements, and feeds. */
+  cricketCommunityEnabled: boolean;
+
+  /** Fan polls: create, vote, close, and display results. */
+  cricketPollsEnabled: boolean;
+
+  /** Per-match fan discussion threads with moderation and slow-mode. */
+  cricketMatchThreadsEnabled: boolean;
+
+  /** In-app notification center. No external provider required. */
+  cricketInAppNotificationsEnabled: boolean;
 }
 
 export const flags: FeatureFlags = {
@@ -114,7 +131,8 @@ export const flags: FeatureFlags = {
   multiSportEnabled: boolFlag("NEXT_PUBLIC_MULTI_SPORT_ENABLED", true),
   cricketEnabled: boolFlag("NEXT_PUBLIC_CRICKET_ENABLED", true),
   cricketSocialEnabled: boolFlag("NEXT_PUBLIC_CRICKET_SOCIAL_ENABLED", false),
-  cricketStreamingEnabled: boolFlag("NEXT_PUBLIC_CRICKET_STREAMING_ENABLED", false),
+  cricketStreamingEnabled: boolFlag("NEXT_PUBLIC_CRICKET_STREAMING_ENABLED", true),
+  cricketBroadcastOverlaysEnabled: boolFlag("NEXT_PUBLIC_CRICKET_BROADCAST_OVERLAYS_ENABLED", true),
   cricketMarketplaceEnabled: boolFlag("NEXT_PUBLIC_CRICKET_MARKETPLACE_ENABLED", false),
   cricketNewsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_NEWS_ENABLED", false),
   cricketLiveScoringEnabled: boolFlag("NEXT_PUBLIC_CRICKET_LIVE_SCORING_ENABLED", false),
@@ -122,6 +140,10 @@ export const flags: FeatureFlags = {
     "NEXT_PUBLIC_CRICKET_ADVANCED_ANALYTICS_ENABLED",
     false
   ),
+  cricketCommunityEnabled: boolFlag("NEXT_PUBLIC_CRICKET_COMMUNITY_ENABLED", true),
+  cricketPollsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_POLLS_ENABLED", true),
+  cricketMatchThreadsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_MATCH_THREADS_ENABLED", true),
+  cricketInAppNotificationsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_IN_APP_NOTIFICATIONS_ENABLED", true),
 };
 
 // ─── Named re-exports (existing flags) ────────────────────────────────────────
@@ -154,6 +176,10 @@ export function isCricketStreamingEnabled(): boolean {
   return flags.cricketStreamingEnabled;
 }
 
+export function isCricketBroadcastOverlaysEnabled(): boolean {
+  return flags.cricketBroadcastOverlaysEnabled;
+}
+
 export function isCricketMarketplaceEnabled(): boolean {
   return flags.cricketMarketplaceEnabled;
 }
@@ -168,4 +194,20 @@ export function isCricketLiveScoringEnabled(): boolean {
 
 export function isCricketAdvancedAnalyticsEnabled(): boolean {
   return flags.cricketAdvancedAnalyticsEnabled;
+}
+
+export function isCricketCommunityEnabled(): boolean {
+  return flags.cricketCommunityEnabled;
+}
+
+export function isCricketPollsEnabled(): boolean {
+  return flags.cricketPollsEnabled;
+}
+
+export function isCricketMatchThreadsEnabled(): boolean {
+  return flags.cricketMatchThreadsEnabled;
+}
+
+export function isCricketInAppNotificationsEnabled(): boolean {
+  return flags.cricketInAppNotificationsEnabled;
 }

@@ -79,9 +79,9 @@ describe("BattingTable", () => {
     expect(screen.getByText("45")).toBeInTheDocument();
   });
 
-  it("renders DNB for did not bat", () => {
+  it("renders did not bat indicator", () => {
     render(<BattingTable entries={[dnbEntry]} teamName="Test XI" />);
-    expect(screen.getAllByText("DNB").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("did not bat").length).toBeGreaterThan(0);
   });
 
   it("renders empty state when no entries", () => {

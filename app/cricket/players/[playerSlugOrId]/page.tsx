@@ -5,6 +5,8 @@ import { MapPin, User } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { getServerUser } from "@/lib/supabase/server";
 import { getCricketPlayerBySlug, getCricketPlayerById, getCricketTeamsForPlayer } from "@/lib/cricket/players/queries";
+import { getCricketPlayerStats } from "@/lib/cricket/stats/queries";
+import { ballsToOversText } from "@/lib/cricket/scorecards/calculations";
 import type { CricketPlayerFull } from "@/lib/cricket/types";
 
 interface Props {
@@ -72,7 +74,47 @@ export default async function CricketPlayerPage({ params }: Props) {
   const user = await getServerUser();
   const canEdit = user ? (user.id === player.createdBy || user.id === player.userId) : false;
 
-  const teams = await getCricketTeamsForPlayer(player.id);
+  const [teams, allStats] = await Promise.all([
+    getCricketTeamsForPlayer(player.id),
+    getCricketPlayerStats(player.id).catch(() => []),
+  ]);
+
+  // Aggregate totals across all leagues
+  const aggStats = allStats.reduce(
+    (acc, s) => ({
+      matchesPlayed: acc.matchesPlayed + s.matchesPlayed,
+      inningsBatted: acc.inningsBatted + s.inningsBatted,
+      runs: acc.runs + s.runs,
+      ballsFaced: acc.ballsFaced + s.ballsFaced,
+      fours: acc.fours + s.fours,
+      sixes: acc.sixes + s.sixes,
+      highestScore: Math.max(acc.highestScore, s.highestScore),
+      ducks: acc.ducks + s.ducks,
+      fifties: acc.fifties + s.fifties,
+      hundreds: acc.hundreds + s.hundreds,
+      inningsBowled: acc.inningsBowled + s.inningsBowled,
+      ballsBowled: acc.ballsBowled + s.ballsBowled,
+      runsConceded: acc.runsConceded + s.runsConceded,
+      wickets: acc.wickets + s.wickets,
+      maidens: acc.maidens + s.maidens,
+      catches: acc.catches + s.catches,
+      stumpings: acc.stumpings + s.stumpings,
+      runOuts: acc.runOuts + s.runOuts,
+      notOuts: acc.notOuts + s.notOuts,
+    }),
+    {
+      matchesPlayed: 0, inningsBatted: 0, runs: 0, ballsFaced: 0, fours: 0, sixes: 0,
+      highestScore: 0, ducks: 0, fifties: 0, hundreds: 0, inningsBowled: 0, ballsBowled: 0,
+      runsConceded: 0, wickets: 0, maidens: 0, catches: 0, stumpings: 0, runOuts: 0, notOuts: 0,
+    }
+  );
+
+  const outs = aggStats.inningsBatted - aggStats.notOuts;
+  const battingAvg = outs > 0 ? (aggStats.runs / outs).toFixed(2) : null;
+  const battingStrikeRate = aggStats.ballsFaced > 0 ? ((aggStats.runs / aggStats.ballsFaced) * 100).toFixed(1) : null;
+  const bowlingAvg = aggStats.wickets > 0 ? (aggStats.runsConceded / aggStats.wickets).toFixed(2) : null;
+  const economyRate = aggStats.ballsBowled > 0 ? ((aggStats.runsConceded / aggStats.ballsBowled) * 6).toFixed(2) : null;
+  const hasStats = allStats.length > 0;
 
   const initials = player.displayName
     .split(" ")
@@ -188,16 +230,141 @@ export default async function CricketPlayerPage({ params }: Props) {
         </div>
       )}
 
-      {/* Coming soon stats */}
+      {/* Player statistics */}
       <div className="mb-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Player statistics</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {["Career stats", "Batting stats", "Bowling stats", "Fielding stats"].map((label) => (
-            <div key={label} className="rounded-xl border border-slate-800/40 bg-slate-900/40 px-4 py-4 opacity-60">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{label}</p>
-              <p className="text-sm text-slate-600">Coming soon</p>
+        {!hasStats ? (
+          <div className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-6 text-center">
+            <p className="text-sm text-slate-400">Stats will appear after scorecards are completed.</p>
+            <p className="text-xs text-slate-500 mt-1">Ask a league admin to rebuild player statistics.</p>
+          </div>
+        ) : (
+          <>
+            {/* Career overview */}
+            <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Matches</p>
+                <p className="text-xl font-bold text-sky-400">{aggStats.matchesPlayed}</p>
+              </div>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Runs</p>
+                <p className="text-xl font-bold text-sky-400">{aggStats.runs}</p>
+              </div>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Wickets</p>
+                <p className="text-xl font-bold text-sky-400">{aggStats.wickets}</p>
+              </div>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Catches</p>
+                <p className="text-xl font-bold text-sky-400">{aggStats.catches}</p>
+              </div>
             </div>
-          ))}
+
+            {/* Batting stats */}
+            {aggStats.inningsBatted > 0 && (
+              <div className="mb-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Batting</h3>
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Innings</p>
+                    <p className="font-bold text-slate-200">{aggStats.inningsBatted}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Avg</p>
+                    <p className="font-bold text-slate-200">{battingAvg ?? "—"}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">SR</p>
+                    <p className="font-bold text-slate-200">{battingStrikeRate ?? "—"}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">HS</p>
+                    <p className="font-bold text-slate-200">{aggStats.highestScore}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">50s/100s</p>
+                    <p className="font-bold text-slate-200">{aggStats.fifties}/{aggStats.hundreds}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">4s/6s</p>
+                    <p className="font-bold text-slate-200">{aggStats.fours}/{aggStats.sixes}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bowling stats */}
+            {aggStats.inningsBowled > 0 && (
+              <div className="mb-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Bowling</h3>
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Overs</p>
+                    <p className="font-bold text-slate-200">{ballsToOversText(aggStats.ballsBowled)}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Wickets</p>
+                    <p className="font-bold text-slate-200">{aggStats.wickets}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Avg</p>
+                    <p className="font-bold text-slate-200">{bowlingAvg ?? "—"}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Econ</p>
+                    <p className="font-bold text-slate-200">{economyRate ?? "—"}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Maidens</p>
+                    <p className="font-bold text-slate-200">{aggStats.maidens}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fielding stats */}
+            {(aggStats.catches + aggStats.stumpings + aggStats.runOuts) > 0 && (
+              <div className="mb-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Fielding</h3>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Catches</p>
+                    <p className="font-bold text-slate-200">{aggStats.catches}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Stumpings</p>
+                    <p className="font-bold text-slate-200">{aggStats.stumpings}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <p className="text-xs text-slate-500 mb-1">Run Outs</p>
+                    <p className="font-bold text-slate-200">{aggStats.runOuts}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats by league */}
+            {allStats.length > 1 && (
+              <p className="text-xs text-slate-500">
+                Stats aggregated from {allStats.length} league{allStats.length !== 1 ? "s" : ""}.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Advanced analytics section */}
+      <div className="mb-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Advanced Analytics</h2>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-5 py-4">
+          <p className="text-sm text-slate-400 mb-3">
+            Advanced player analytics (wagon wheel, phase performance, scoring zones) require ball-by-ball data from live-scored matches.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1">Wagon Wheel — requires zone data</span>
+            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1">Phase Performance — requires ball-by-ball</span>
+            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1">Dot Ball % — requires ball-by-ball</span>
+          </div>
         </div>
       </div>
 

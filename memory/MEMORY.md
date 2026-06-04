@@ -10,3 +10,5 @@
 - [Prompt 29 — Cricket League Creation](project_prompt29_cricket_leagues.md) — League creation workflow, 5 new routes, migration 0015, settings/setup/invite, 311 tests pass
 - [Prompt 30 — Cricket Team Registration](project_prompt30_cricket_teams.md) — Team registration, roster management, player profiles, migration 0016, 6 new routes, 392 tests pass
 - [Prompt 31 — Cricket Match Scheduling](project_prompt31_scheduling.md) — Venue management, fixture generation, conflict detection, schedule calendar, 8 new routes, migration 0017, 470 tests pass
+- [Prompt 34 — Cricket Standings & Leaderboards](project_prompt34_standings.md) — Points table, NRR, player stats, batting/bowling/fielding leaderboards, team stats, migration 0020, 3 new routes, 770 tests pass
+- [Prompt 35 — Cricket Visual Analytics](project_prompt35_analytics.md) — Worm/Manhattan/run-rate/wagon-wheel/partnership/momentum charts (pure SVG), migration 0021, 2 new routes, shot details in live scoring, 840 tests pass

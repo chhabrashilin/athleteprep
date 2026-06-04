@@ -46,11 +46,17 @@ export function LiveScoringKeypad({
 }: Props) {
   const [pendingExtra, setPendingExtra] = useState<PendingExtra>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showShotDetails, setShowShotDetails] = useState(false);
   const [wicketType, setWicketType] = useState("");
   const [playerOutId, setPlayerOutId] = useState("");
   const [fielderPlayerId, setFielderPlayerId] = useState("");
   const [commentary, setCommentary] = useState("");
   const [extraRuns, setExtraRuns] = useState(1);
+  // Shot detail fields (optional analytics data)
+  const [shotType, setShotType] = useState("");
+  const [wagonZone, setWagonZone] = useState("");
+  const [batContactType, setBatContactType] = useState("");
+  const [fieldingPositionDetail, setFieldingPositionDetail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -82,6 +88,11 @@ export function LiveScoringKeypad({
       player_out_id: isWicket && playerOutId ? playerOutId : undefined,
       fielder_player_id: fielderPlayerId || undefined,
       commentary: commentary || undefined,
+      // Optional shot detail fields
+      shot_type: shotType || undefined,
+      wagon_zone: wagonZone || undefined,
+      bat_contact_type: batContactType || undefined,
+      fielding_position: fieldingPositionDetail || undefined,
     };
 
     startTransition(async () => {
@@ -100,6 +111,11 @@ export function LiveScoringKeypad({
       setFielderPlayerId("");
       setCommentary("");
       setExtraRuns(1);
+      // Reset shot details (keep panel open so scorer can re-enter for next ball)
+      setShotType("");
+      setWagonZone("");
+      setBatContactType("");
+      setFieldingPositionDetail("");
 
       if (result.data) {
         onBallRecorded(result.data.event, result.data.liveState);
@@ -315,6 +331,83 @@ export function LiveScoringKeypad({
           )}
         </div>
       )}
+
+      {/* Shot details toggle — optional, does not block scoring */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowShotDetails(!showShotDetails)}
+          className="text-xs text-slate-500 hover:text-slate-400 transition-colors flex items-center gap-1"
+        >
+          <span>{showShotDetails ? "▼" : "▶"}</span>
+          Shot details (optional analytics)
+          {(shotType || wagonZone || batContactType) && (
+            <span className="ml-1 rounded-full bg-sky-500/20 text-sky-400 px-1.5 py-0.5 text-[10px]">filled</span>
+          )}
+        </button>
+
+        {showShotDetails && (
+          <div className="mt-2 rounded-lg border border-slate-700/50 bg-slate-800/50 p-3 space-y-2">
+            <p className="text-[10px] text-slate-600 italic">All fields optional. Enables wagon wheel and phase analytics.</p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-0.5">Shot type</label>
+                <select
+                  value={shotType}
+                  onChange={(e) => setShotType(e.target.value)}
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-200"
+                >
+                  <option value="">—</option>
+                  {["drive","cut","pull","hook","sweep","reverse_sweep","glance","flick","loft","defence","leave","nudge"].map((s) => (
+                    <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-0.5">Wagon zone</label>
+                <select
+                  value={wagonZone}
+                  onChange={(e) => setWagonZone(e.target.value)}
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-200"
+                >
+                  <option value="">—</option>
+                  {["straight","mid_off","cover","point","third_man","fine_leg","square_leg","mid_wicket","mid_on"].map((z) => (
+                    <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-0.5">Bat contact</label>
+                <select
+                  value={batContactType}
+                  onChange={(e) => setBatContactType(e.target.value)}
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-200"
+                >
+                  <option value="">—</option>
+                  {["middle","edge","inside_edge","top_edge","missed","pad"].map((c) => (
+                    <option key={c} value={c}>{c.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-0.5">Fielder position</label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  value={fieldingPositionDetail}
+                  onChange={(e) => setFieldingPositionDetail(e.target.value)}
+                  placeholder="e.g. mid-on"
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Match controls */}
       <div className="flex gap-2 border-t border-slate-800 pt-3">

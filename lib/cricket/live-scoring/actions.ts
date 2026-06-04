@@ -456,6 +456,8 @@ export async function recordBallEvent(
       is_dot_ball: isDot,
       shot_type: input.shot_type ?? null,
       fielding_position: input.fielding_position ?? null,
+      wagon_zone: input.wagon_zone ?? null,
+      bat_contact_type: input.bat_contact_type ?? null,
       commentary,
       scorer_user_id: auth.userId,
     })

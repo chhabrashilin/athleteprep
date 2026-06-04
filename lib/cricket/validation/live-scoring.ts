@@ -58,6 +58,8 @@ export const ballEventSchema = z.object({
   commentary:        z.string().max(500).optional().nullable(),
   shot_type:         z.string().max(100).optional().nullable(),
   fielding_position: z.string().max(100).optional().nullable(),
+  wagon_zone:        z.string().max(50).optional().nullable(),
+  bat_contact_type:  z.string().max(50).optional().nullable(),
 }).refine((d) => d.striker_id !== d.non_striker_id, {
   message: "Striker and non-striker must be different players",
   path: ["non_striker_id"],

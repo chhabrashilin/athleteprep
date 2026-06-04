@@ -721,3 +721,551 @@ export interface CricketFullScorecard {
   leagueName: string | null;
   leagueSlug: string | null;
 }
+
+// ─── Standings types (migration 0020) ────────────────────────────────────────
+
+export type StandingsFormResult = "W" | "L" | "T" | "NR" | "A";
+
+export interface CricketTeamStanding {
+  id: string;
+  leagueId: string;
+  teamId: string;
+  matchesPlayed: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  noResults: number;
+  abandoned: number;
+  forfeitsFor: number;
+  forfeitsAgainst: number;
+  points: number;
+  bonusPoints: number;
+  totalPoints: number;
+  runsFor: number;
+  ballsFor: number;
+  runsAgainst: number;
+  ballsAgainst: number;
+  wicketsFor: number;
+  wicketsAgainst: number;
+  netRunRate: number;
+  position: number | null;
+  previousPosition: number | null;
+  form: StandingsFormResult[];
+  lastMatchId: string | null;
+  calculatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CricketTeamStandingWithTeam extends CricketTeamStanding {
+  teamName: string;
+  teamShortName: string | null;
+  teamSlug: string;
+  teamPrimaryColor: string | null;
+}
+
+export interface CricketStandingsSnapshot {
+  id: string;
+  leagueId: string;
+  snapshotType: string;
+  generatedBy: string | null;
+  standings: unknown[];
+  summary: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface CricketMatchTeamResult {
+  id: string;
+  matchId: string;
+  leagueId: string | null;
+  teamId: string;
+  opponentTeamId: string | null;
+  result: string;
+  points: number;
+  bonusPoints: number;
+  runsFor: number;
+  ballsFor: number;
+  wicketsLost: number;
+  runsAgainst: number;
+  ballsAgainst: number;
+  wicketsTaken: number;
+  netRunRateDelta: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Player stats types (migration 0020) ─────────────────────────────────────
+
+export interface CricketPlayerStats {
+  id: string;
+  leagueId: string | null;
+  teamId: string | null;
+  playerId: string;
+  matchesPlayed: number;
+  inningsBatted: number;
+  notOuts: number;
+  runs: number;
+  ballsFaced: number;
+  fours: number;
+  sixes: number;
+  highestScore: number;
+  battingAverage: number | null;
+  battingStrikeRate: number | null;
+  ducks: number;
+  fifties: number;
+  hundreds: number;
+  inningsBowled: number;
+  ballsBowled: number;
+  runsConceded: number;
+  wickets: number;
+  maidens: number;
+  wides: number;
+  noBalls: number;
+  bowlingAverage: number | null;
+  economyRate: number | null;
+  bowlingStrikeRate: number | null;
+  bestBowlingWickets: number;
+  bestBowlingRuns: number | null;
+  catches: number;
+  stumpings: number;
+  runOuts: number;
+  calculatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CricketPlayerStatsWithPlayer extends CricketPlayerStats {
+  playerName: string;
+  playerSlug: string | null;
+  teamName: string | null;
+  teamSlug: string | null;
+}
+
+export type CricketLeaderboardType =
+  | "batting_runs"
+  | "batting_average"
+  | "batting_strike_rate"
+  | "highest_score"
+  | "bowling_wickets"
+  | "bowling_average"
+  | "economy_rate"
+  | "bowling_strike_rate"
+  | "fielding_catches"
+  | "all_rounder_index"
+  | "team_nrr"
+  | "team_points";
+
+export interface CricketLeaderboardSnapshot {
+  id: string;
+  leagueId: string | null;
+  leaderboardType: string;
+  generatedBy: string | null;
+  data: unknown[];
+  summary: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface LeaderboardFilter {
+  leagueId: string;
+  teamId?: string;
+  leaderboardType: CricketLeaderboardType;
+  minMatches?: number;
+  minInnings?: number;
+  minBalls?: number;
+  limit?: number;
+  sortDirection?: "asc" | "desc";
+}
+
+// ─── Analytics types (migration 0021) ────────────────────────────────────────
+
+export type WagonZone =
+  | "third_man"
+  | "point"
+  | "cover"
+  | "mid_off"
+  | "straight"
+  | "mid_on"
+  | "mid_wicket"
+  | "square_leg"
+  | "fine_leg"
+  | "unknown";
+
+export type BattingPhase =
+  | "powerplay"
+  | "middle_overs"
+  | "death_overs"
+  | "chase_setup"
+  | "chase_finish"
+  | "unknown";
+
+export type BowlingPhase =
+  | "new_ball"
+  | "middle_overs"
+  | "death_overs"
+  | "spin_phase"
+  | "pace_phase"
+  | "unknown";
+
+export type BatContactType =
+  | "middle"
+  | "edge"
+  | "inside_edge"
+  | "top_edge"
+  | "missed"
+  | "pad"
+  | "unknown";
+
+export type AnalyticsChartType =
+  | "worm"
+  | "manhattan"
+  | "run_rate"
+  | "wagon_wheel"
+  | "partnerships"
+  | "momentum"
+  | "phase_summary";
+
+/** A ball event row extended with visual analytics columns from migration 0021. */
+export interface CricketBallEventAnalytics {
+  id: string;
+  matchId: string;
+  inningsId: string;
+  battingTeamId: string;
+  bowlingTeamId: string;
+  overNumber: number;
+  ballInOver: number;
+  legalBallNumber: number | null;
+  inningsBallNumber: number | null;
+  strikerId: string | null;
+  nonStrikerId: string | null;
+  bowlerId: string | null;
+  runsBatter: number;
+  runsExtras: number;
+  runsTotal: number;
+  extraType: string | null;
+  wicketType: string | null;
+  playerOutId: string | null;
+  isLegalDelivery: boolean;
+  isWicket: boolean;
+  isBoundaryFour: boolean;
+  isBoundarySix: boolean;
+  isDotBall: boolean;
+  shotType: string | null;
+  lineLengthText: string | null;
+  fieldingPosition: string | null;
+  // Analytics columns (0021)
+  shotX: number | null;
+  shotY: number | null;
+  wagonZone: WagonZone | null;
+  wagonAngleDegrees: number | null;
+  wagonDistanceMeters: number | null;
+  batContactType: BatContactType | null;
+  battingPhase: BattingPhase | null;
+  bowlingPhase: BowlingPhase | null;
+  pressureIndex: number | null;
+  momentumDelta: number | null;
+  expectedRuns: number | null;
+  expectedWicketProbability: number | null;
+  isDeleted: boolean;
+  createdAt: string;
+}
+
+export interface CricketMatchAnalyticsSnapshot {
+  id: string;
+  matchId: string;
+  leagueId: string | null;
+  snapshotType: string;
+  generatedBy: string | null;
+  data: Record<string, unknown>;
+  summary: Record<string, unknown>;
+  createdAt: string;
+}
+
+// ─── Chart data shapes ────────────────────────────────────────────────────────
+
+export interface WormChartPoint {
+  inningsId: string;
+  teamId: string;
+  ballNumber: number;
+  overText: string;
+  cumulativeRuns: number;
+  wickets: number;
+  label: string;
+}
+
+export interface ManhattanChartBar {
+  inningsId: string;
+  overNumber: number;
+  runs: number;
+  wickets: number;
+  boundaries: number;
+  extras: number;
+}
+
+export interface RunRatePoint {
+  overText: string;
+  overNumber: number;
+  currentRunRate: number | null;
+  requiredRunRate: number | null;
+  runs: number;
+  balls: number;
+  wickets: number;
+}
+
+export interface PartnershipChartRow {
+  wicketNumber: number;
+  playerOneName: string;
+  playerTwoName: string;
+  runs: number;
+  balls: number;
+  runRate: number | null;
+  startScore: number | null;
+  endScore: number | null;
+}
+
+export interface WagonZoneSummary {
+  zoneName: WagonZone;
+  runs: number;
+  balls: number;
+  boundaries: number;
+  percentage: number;
+}
+
+export interface WagonWheelData {
+  zones: WagonZoneSummary[];
+  hasShotCoordinates: boolean;
+  reason: string | null;
+  totalRuns: number;
+  totalBalls: number;
+}
+
+export interface PhaseSummaryRow {
+  phase: BattingPhase;
+  label: string;
+  runs: number;
+  wickets: number;
+  balls: number;
+  runRate: number | null;
+  boundaries: number;
+  dotBallPercentage: number | null;
+}
+
+export interface MomentumPoint {
+  overNumber: number;
+  battingTeamMomentum: number;
+  bowlingTeamMomentum: number;
+  explanation: string;
+}
+
+export interface MatchAnalyticsSummary {
+  bestScoringPhase: string | null;
+  mostEconomicalPhase: string | null;
+  biggestOver: { overNumber: number; runs: number } | null;
+  highestPartnership: { runs: number; wicketNumber: number } | null;
+  collapseDetected: boolean;
+  collapseDescription: string | null;
+}
+
+// ─── Streaming & Broadcast Types ─────────────────────────────────────────────
+
+export type StreamProvider = "overlay_only" | "youtube" | "twitch" | "custom_rtmp" | "external_embed";
+export type StreamStatus = "not_configured" | "scheduled" | "ready" | "live" | "paused" | "ended" | "failed" | "archived";
+export type StreamVisibility = "private" | "league" | "unlisted" | "public";
+export type BroadcastStatus = "not_configured" | "setup" | "ready" | "live" | "ended" | "failed";
+export type OverlayLayout = "classic_scorebug" | "lower_third" | "full_scorecard" | "innings_summary" | "toss_card" | "result_card" | "minimal" | "vertical_mobile";
+export type OverlayScope = "match_overlay" | "scorebug" | "full_overlay" | "read_only_stream";
+export type StreamHealthStatus = "unknown" | "healthy" | "warning" | "critical" | "offline";
+
+export interface CricketStreamingChannel {
+  id: string;
+  leagueId: string | null;
+  teamId: string | null;
+  name: string;
+  slug: string;
+  provider: StreamProvider;
+  providerChannelId: string | null;
+  publicWatchUrl: string | null;
+  embedUrl: string | null;
+  rtmpIngestUrl: string | null;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CricketMatchStream {
+  id: string;
+  matchId: string;
+  leagueId: string | null;
+  channelId: string | null;
+  title: string;
+  description: string | null;
+  status: StreamStatus;
+  provider: StreamProvider;
+  publicWatchUrl: string | null;
+  embedUrl: string | null;
+  scheduledStart: string | null;
+  actualStart: string | null;
+  actualEnd: string | null;
+  visibility: StreamVisibility;
+  allowPublicEmbed: boolean;
+  overlayThemeId: string | null;
+  streamOperatorUserId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CricketOverlayTheme {
+  id: string;
+  leagueId: string | null;
+  teamId: string | null;
+  name: string;
+  slug: string;
+  layout: OverlayLayout;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  accentColor: string | null;
+  textColor: string | null;
+  backgroundColor: string | null;
+  logoUrl: string | null;
+  sponsorLogoUrl: string | null;
+  sponsorText: string | null;
+  fontFamily: string | null;
+  safeAreaTop: number;
+  safeAreaBottom: number;
+  safeAreaLeft: number;
+  safeAreaRight: number;
+  isDefault: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CricketOverlayToken {
+  id: string;
+  matchId: string;
+  leagueId: string | null;
+  tokenPrefix: string;
+  label: string | null;
+  scope: OverlayScope;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface CricketStreamEvent {
+  id: string;
+  matchStreamId: string | null;
+  matchId: string | null;
+  leagueId: string | null;
+  actorUserId: string | null;
+  eventType: string;
+  eventPayload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface CricketStreamHealthCheck {
+  id: string;
+  matchStreamId: string | null;
+  matchId: string | null;
+  status: StreamHealthStatus;
+  latencyMs: number | null;
+  droppedFrames: number | null;
+  bitrateKbps: number | null;
+  viewerCount: number | null;
+  message: string | null;
+  checkedAt: string;
+  createdBy: string | null;
+}
+
+export interface CricketBroadcastChecklist {
+  id: string;
+  matchId: string;
+  matchStreamId: string | null;
+  checklistKey: string;
+  label: string;
+  completed: boolean;
+  completedBy: string | null;
+  completedAt: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Overlay View Models ──────────────────────────────────────────────────────
+
+export interface ScorebugOverlayData {
+  matchTitle: string;
+  leagueName: string | null;
+  battingTeamShortName: string;
+  bowlingTeamShortName: string;
+  scoreText: string;
+  oversText: string;
+  runRate: string | null;
+  targetText: string | null;
+  strikerName: string | null;
+  strikerRunsBalls: string | null;
+  nonStrikerName: string | null;
+  nonStrikerRunsBalls: string | null;
+  bowlerName: string | null;
+  bowlerFigures: string | null;
+  lastBalls: string[];
+  statusLabel: string;
+}
+
+export interface LowerThirdData {
+  playerName: string;
+  role: string | null;
+  statLine: string | null;
+  teamName: string | null;
+  imageUrl: string | null;
+}
+
+export interface TossOverlayData {
+  tossWinner: string;
+  decision: string;
+  homeTeam: string;
+  awayTeam: string;
+  venue: string | null;
+  matchTitle: string;
+}
+
+export interface InningsBreakOverlayData {
+  battingTeam: string;
+  score: string;
+  target: number;
+  topBatter: string | null;
+  topBatterScore: string | null;
+  topBowler: string | null;
+  topBowlerFigures: string | null;
+  chaseRequirement: string;
+  oversToChase: string | null;
+}
+
+export interface ResultOverlayData {
+  winner: string;
+  margin: string;
+  playerOfMatch: string | null;
+  team1Score: string;
+  team2Score: string;
+  matchTitle: string;
+}
+
+export interface FullScorecardOverlayData {
+  battingTeam: string;
+  bowlingTeam: string;
+  batting: Array<{ name: string; runs: number; balls: number; fours: number; sixes: number; sr: string; howOut: string }>;
+  bowling: Array<{ name: string; overs: string; maidens: number; runs: number; wickets: number; economy: string }>;
+  extras: number;
+  total: string;
+}
+
+export type OverlayStatus = "not_configured" | "ready" | "live" | "innings_break" | "completed" | "error";
+
+export interface BroadcastChecklistDefaults {
+  key: string;
+  label: string;
+  sortOrder: number;
+}

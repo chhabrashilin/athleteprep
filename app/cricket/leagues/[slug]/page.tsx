@@ -13,6 +13,7 @@ import {
   BookOpen,
   ListOrdered,
   ChevronRight,
+  BarChart2,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { getServerUser } from "@/lib/supabase/server";
@@ -21,6 +22,8 @@ import {
   userCanManageCricketLeague,
 } from "@/lib/cricket/leagues/queries";
 import { getCricketTeamsForLeague } from "@/lib/cricket/teams/queries";
+import { getCricketLeagueStandings } from "@/lib/cricket/standings/queries";
+import { getCricketTeamStatsSummary } from "@/lib/cricket/stats/queries";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -106,9 +109,11 @@ export default async function CricketLeagueDetailPage({ params }: Props) {
   if (!league) notFound();
 
   const user = await getServerUser();
-  const [canManage, teams] = await Promise.all([
+  const [canManage, teams, standings, statsSummary] = await Promise.all([
     user ? userCanManageCricketLeague(user.id, league.id) : Promise.resolve(false),
     getCricketTeamsForLeague(league.id),
+    getCricketLeagueStandings(league.id).catch(() => []),
+    getCricketTeamStatsSummary(league.id).catch(() => ({ topRunScorer: null, topWicketTaker: null, bestEconomy: null })),
   ]);
 
   const vis = VISIBILITY_CONFIG[league.visibility] ?? VISIBILITY_CONFIG.private;
@@ -144,9 +149,24 @@ export default async function CricketLeagueDetailPage({ params }: Props) {
     },
     {
       label: "Points Table",
-      description: "Live standings with NRR and run rates.",
-      available: false,
+      description: "Live standings with NRR, wins, losses, and run rates.",
+      href: `/cricket/leagues/${slug}/points-table`,
+      available: true,
       icon: <ListOrdered className="h-4 w-4" />,
+    },
+    {
+      label: "Leaderboards",
+      description: "Batting, bowling, fielding, and all-rounder rankings.",
+      href: `/cricket/leagues/${slug}/leaderboards`,
+      available: true,
+      icon: <BarChart2 className="h-4 w-4" />,
+    },
+    {
+      label: "Analytics",
+      description: "Worm, Manhattan, wagon wheel, partnerships, and match momentum.",
+      href: `/cricket/leagues/${slug}/analytics`,
+      available: true,
+      icon: <BarChart2 className="h-4 w-4" />,
     },
     {
       label: "Scorecards",
@@ -249,6 +269,90 @@ export default async function CricketLeagueDetailPage({ params }: Props) {
         <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 px-5 py-4">
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">About</p>
           <p className="text-sm text-slate-300 leading-relaxed">{league.description}</p>
+        </div>
+      )}
+
+      {/* Points table preview */}
+      {standings.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Points Table</h2>
+            <Link href={`/cricket/leagues/${slug}/points-table`} className="text-xs text-sky-400 hover:underline">
+              View full table →
+            </Link>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-800">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">#</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Team</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">P</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">W</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">L</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 font-bold">Pts</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">NRR</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {standings.slice(0, 5).map((s, i) => (
+                  <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="px-4 py-2.5 text-slate-400 text-sm">{s.position ?? i + 1}</td>
+                    <td className="px-4 py-2.5">
+                      <Link href={`/cricket/teams/${s.teamSlug}`} className="flex items-center gap-2 text-slate-200 hover:text-sky-400 transition-colors">
+                        <div
+                          className="h-5 w-5 shrink-0 rounded flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ backgroundColor: s.teamPrimaryColor ?? "#334155" }}
+                        >
+                          {s.teamShortName?.slice(0, 2).toUpperCase() ?? s.teamName.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-sm font-medium truncate max-w-[140px]">{s.teamName}</span>
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-slate-300 text-sm">{s.matchesPlayed}</td>
+                    <td className="px-3 py-2.5 text-center text-emerald-400 text-sm">{s.wins}</td>
+                    <td className="px-3 py-2.5 text-center text-rose-400 text-sm">{s.losses}</td>
+                    <td className="px-3 py-2.5 text-center font-bold text-sky-400 text-sm">{s.totalPoints}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      <span className={`font-mono text-xs ${s.netRunRate >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {s.netRunRate >= 0 ? "+" : ""}{s.netRunRate.toFixed(3)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard preview */}
+      {(statsSummary.topRunScorer || statsSummary.topWicketTaker) && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Leaderboard Highlights</h2>
+            <Link href={`/cricket/leagues/${slug}/leaderboards`} className="text-xs text-sky-400 hover:underline">
+              Full leaderboards →
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {statsSummary.topRunScorer && (
+              <div className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-4">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Top Run Scorer</p>
+                <p className="text-base font-bold text-slate-100">{statsSummary.topRunScorer.playerName}</p>
+                <p className="text-2xl font-bold text-sky-400">{statsSummary.topRunScorer.runs}</p>
+                <p className="text-xs text-slate-500">runs</p>
+              </div>
+            )}
+            {statsSummary.topWicketTaker && (
+              <div className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-4">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Top Wicket Taker</p>
+                <p className="text-base font-bold text-slate-100">{statsSummary.topWicketTaker.playerName}</p>
+                <p className="text-2xl font-bold text-emerald-400">{statsSummary.topWicketTaker.wickets}</p>
+                <p className="text-xs text-slate-500">wickets</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

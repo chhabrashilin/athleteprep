@@ -1001,3 +1001,449 @@ Prompt 33 — Ball-by-Ball Live Scoring Engine and Real-Time Updates
 
 Prompt 34 — Points Table, Leaderboards, and Tournament Standings
 
+---
+
+# Prompt 34 — Cricket Points Table, Standings, Leaderboards, and Player Statistics
+
+## Summary
+
+Prompt 34 implements CricClubs-level standings and statistics for GameIQ's cricket platform.
+Teams now have a real points table, NRR calculation, form tracking, and position ranking.
+Players have batting/bowling/fielding stats derived from persisted scorecards.
+
+---
+
+## New Migration
+
+**`0020_cricket_standings_leaderboards.sql`**
+
+New tables:
+- `cricket_team_standings` — per-team league standings with points, NRR, form, position
+- `cricket_standings_snapshots` — point-in-time snapshots of standings
+- `cricket_player_stats` — aggregated batting/bowling/fielding stats per player per league
+- `cricket_match_team_results` — per-team per-match result record (win/loss/tie/NR/etc.)
+- `cricket_leaderboard_snapshots` — snapshots of leaderboard data
+
+New columns on `cricket_matches`:
+- `standings_applied`, `standings_applied_at` — tracks whether this match has been included in standings
+- `stats_applied`, `stats_applied_at` — tracks whether stats have been rebuilt for this match
+
+New SQL helper functions:
+- `user_can_view_cricket_league_stats(league_id, user_id)` — public/member/admin check
+- `user_can_rebuild_cricket_stats(league_id, user_id)` — owner/admin/manager check
+
+---
+
+## New Library Files
+
+### Calculations (pure functions, fully testable)
+- `lib/cricket/standings/calculations.ts` — NRR, points, aggregation, form, rank, consistency
+- `lib/cricket/stats/player-calculations.ts` — batting avg, bowling avg, economy, all-rounder index, leaderboard ranking
+
+### Validation
+- `lib/cricket/validation/standings.ts` — rebuild schema, leaderboard filter schema
+
+### Data Access
+- `lib/cricket/standings/queries.ts` — getCricketLeagueStandings, getCricketTeamStanding, getCricketMatchTeamResults, getLatestStandingsSnapshot, getStandingsRebuildSummary
+- `lib/cricket/standings/actions.ts` — rebuildCricketLeagueStandings, createCricketStandingsSnapshot
+- `lib/cricket/stats/queries.ts` — getCricketPlayerStatsForLeague, getCricketBattingLeaderboard, getCricketBowlingLeaderboard, getCricketFieldingLeaderboard, getCricketAllRounderLeaderboard, getCricketTeamStatsSummary
+- `lib/cricket/stats/actions.ts` — rebuildCricketPlayerStats, rebuildAllCricketLeagueStats, refreshStatsAfterMatchFinalized, createCricketLeaderboardSnapshot
+- `lib/cricket/leaderboards/queries.ts` — re-exports from stats/queries
+
+### Client Components
+- `components/cricket/RebuildStandingsButton.tsx` — admin button to rebuild standings
+- `components/cricket/RebuildPlayerStatsButton.tsx` — admin button to rebuild player stats
+
+---
+
+## New Routes
+
+| Route | Description |
+|---|---|
+| `/cricket/leagues/[slug]/points-table` | Full points table with NRR, form, position |
+| `/cricket/leagues/[slug]/leaderboards` | Batting/bowling/fielding/all-rounder/team tabs |
+| `/cricket/teams/[teamSlug]/stats` | Team record, NRR, player leaderboards |
+
+---
+
+## Updated Routes/Pages
+
+| Route | Change |
+|---|---|
+| `/cricket/leagues/[slug]` | Added points table preview (top 5), leaderboard highlights, Points Table and Leaderboards module cards now available |
+| `/cricket/players/[playerSlugOrId]` | Real stats sections (batting/bowling/fielding) replacing "Coming soon" |
+| `/cricket/page` | Points Table, Leaderboards, Team Statistics, Player Statistics marked as "available" |
+
+---
+
+## Rebuild Strategy
+
+Stats are calculated on-demand (not automatically after every match). A league admin triggers:
+1. **Rebuild Standings** → reads completed+published matches with completed scorecards, calculates NRR and points, upserts `cricket_team_standings`, creates a snapshot.
+2. **Rebuild Player Stats** → reads batting/bowling scorecard entries, aggregates per player, upserts `cricket_player_stats`.
+
+Both are idempotent (upsert by league+team or league+team+player).
+
+After `refreshStatsAfterMatchFinalized(matchId)` is called (e.g., from result finalization), both rebuilds run automatically.
+
+---
+
+## Manual Test Flow
+
+1. Log in and open a cricket league.
+2. Complete and finalize at least one match scorecard with batting/bowling entries.
+3. Open league → Points Table → click **Rebuild Standings**.
+4. Verify teams appear with correct W/L/Pts/NRR.
+5. Open league → Leaderboards → click **Rebuild Player Stats**.
+6. Verify batting and bowling leaderboard tabs populate.
+7. Open a player profile — verify stats sections show real numbers.
+8. Open team stats page at `/cricket/teams/[slug]/stats` — verify record and top scorers.
+
+---
+
+## Known Limitations
+
+- No manual points adjustments UI (schema only via `standingsAdjustmentSchema`).
+- Fielding stats (catches/stumpings/run outs) require manual entry or ball-by-ball data.
+- No wagon wheel, manhattan, or worm chart yet (Prompt 35).
+- No advanced visual analytics yet.
+- NRR uses full quota for all-out teams by default (ICC rule) — configurable via `nrrUseFullQuotaWhenAllOut`.
+- Rebuild is synchronous (no background job); for large leagues, consider splitting.
+
+---
+
+## New Tests
+
+- `tests/unit/standings-calculations.test.ts` — NRR, points, form, rank, consistency
+- `tests/unit/player-stat-calculations.test.ts` — batting avg, bowling avg, economy, best bowling, ranking
+- `tests/unit/standings-validation.test.ts` — rebuild schema, leaderboard filter schema
+- `tests/components/points-table.test.tsx` — empty state, team rows, NRR display, form badges
+- `tests/components/leaderboards-page.test.tsx` — tabs, empty leaderboard state
+
+---
+
+## Next Prompt
+
+Prompt 35 — Advanced Cricket Visual Analytics: Worm, Manhattan, Wagon Wheel, Run Rate Graphs, Partnerships, and Match Momentum
+
+---
+
+# Prompt 35 — Advanced Cricket Visual Analytics
+
+## Summary
+
+Prompt 35 implements advanced visual analytics on top of the cricket data model. GameIQ now has worm charts, Manhattan charts, run-rate graphs, wagon wheel / shot-zone breakdowns, partnership bars, phase summaries, and experimental match momentum. All charts are rendered with pure SVG React components — no charting library dependency added. Charts display honest empty states when data is unavailable.
+
+---
+
+## New Migration
+
+**`0021_cricket_visual_analytics.sql`**
+
+New columns on `cricket_ball_events`:
+- `shot_x`, `shot_y` — optional shot coordinates
+- `wagon_zone` — categorical zone (cover, mid-on, etc.)
+- `wagon_angle_degrees`, `wagon_distance_meters` — optional shot geometry
+- `bat_contact_type` — middle, edge, inside_edge, top_edge, missed, pad
+- `batting_phase`, `bowling_phase` — phase classification
+- `pressure_index`, `momentum_delta`, `expected_runs`, `expected_wicket_probability` — future model fields
+
+New tables:
+- `cricket_match_analytics_snapshots`
+- `cricket_player_analytics_snapshots`
+- `cricket_team_analytics_snapshots`
+
+---
+
+## New Library Files
+
+### Calculations (pure functions, fully testable)
+- `lib/cricket/analytics/chart-data.ts` — all chart-data builders, zone inference, phase classification, momentum, summary
+
+### Validation
+- `lib/cricket/validation/analytics.ts` — analyticsFilterSchema, generateSnapshotSchema
+
+### Data Access
+- `lib/cricket/analytics/queries.ts` — getMatchAnalyticsData, getMatchBallEvents, getPlayerBallEvents, getLatestMatchAnalyticsSnapshot, getLeagueMatchesForAnalytics
+- `lib/cricket/analytics/actions.ts` — generateMatchAnalyticsSnapshot, generateFullMatchAnalyticsSnapshot
+
+### Chart Components (pure SVG, no external library)
+- `components/cricket/charts/ChartEmptyState.tsx`
+- `components/cricket/charts/CricketChartCard.tsx`
+- `components/cricket/charts/ChartLegend.tsx`
+- `components/cricket/charts/WormChart.tsx`
+- `components/cricket/charts/ManhattanChart.tsx`
+- `components/cricket/charts/RunRateChart.tsx`
+- `components/cricket/charts/PartnershipChart.tsx`
+- `components/cricket/charts/WagonWheelChart.tsx`
+- `components/cricket/charts/PhaseSummaryCards.tsx`
+- `components/cricket/charts/MatchMomentumChart.tsx`
+- `components/cricket/charts/AnalyticsInsightCard.tsx`
+
+---
+
+## New Routes
+
+| Route | Description |
+|---|---|
+| `/cricket/matches/[matchSlugOrId]/analytics` | 7-tab match analytics page |
+| `/cricket/leagues/[slug]/analytics` | League-level analytics summary |
+
+---
+
+## Updated Routes/Pages
+
+| Route | Change |
+|---|---|
+| `/cricket/matches/[matchSlugOrId]` | Analytics card added to sidebar |
+| `/cricket/leagues/[slug]` | Analytics module card added |
+| `/cricket/players/[playerSlugOrId]` | Advanced analytics placeholder section added |
+| `/cricket/teams/[teamSlug]/stats` | Visual analytics section and league analytics link added |
+| `/cricket/page` (cricket hub) | Worm, Manhattan, Run Rate, Wagon Wheel, Partnerships, Momentum marked as available |
+| `components/cricket/LiveScoringKeypad.tsx` | Optional collapsible shot details panel (wagon zone, shot type, bat contact, fielder position) |
+
+---
+
+## Live Scoring Enhancement
+
+Added optional "Shot details" collapsible panel to `LiveScoringKeypad`. Fields: shot type, wagon zone, bat contact type, fielder position. All optional — fast scoring flow unchanged. Data persists into `cricket_ball_events` via extended `BallEventInput` schema.
+
+Updated `lib/cricket/validation/live-scoring.ts` to add `wagon_zone` and `bat_contact_type` optional fields.
+
+---
+
+## Chart Strategy
+
+All charts implemented as pure SVG React components. No external charting library was added. Charts use `viewBox` with `preserveAspectRatio` for responsive scaling, `role="img"` and `aria-label` for accessibility, and provide collapsible summary data tables for screen readers.
+
+The wagon wheel renders a simplified cricket field with zone wedges. If no x/y or zone data is available, it shows a zone breakdown table with an honest empty message.
+
+Match momentum is clearly labelled as experimental.
+
+---
+
+## Manual Test Flow
+
+1. Log in and open a match with ball-by-ball events.
+2. Go to `/cricket/matches/[id]/analytics`.
+3. Check each tab: Summary, Worm, Manhattan, Run Rate, Partnerships, Wagon Wheel, Momentum.
+4. Verify empty states show for matches with only manual scorecard data.
+5. Open live scoring for a match, expand "Shot details" panel, enter a wagon zone, score a ball.
+6. Rebuild match analytics snapshot.
+7. Reopen analytics — verify wagon wheel shows zone data.
+8. Open league analytics at `/cricket/leagues/[slug]/analytics`.
+9. Verify team run-rate profile table and per-match analytics links.
+
+---
+
+## Known Limitations
+
+- Wagon wheel full shot map (x/y dot plot) requires shot coordinates — only available if scorer enters them.
+- Match momentum is experimental; does not use official ICC methodology.
+- No AI-generated tactical narrative yet (Prompt 36+).
+- No video streaming or broadcast overlays.
+- Player-level analytics page shows placeholder — full per-player wagon wheel requires additional data aggregation.
+
+---
+
+## New Tests
+
+- `tests/unit/chart-data-calculations.test.ts` — worm, manhattan, run rate, partnerships, wagon wheel, phase, momentum, summary
+- `tests/unit/analytics-validation.test.ts` — analytics filter schema, generate snapshot schema
+- `tests/components/cricket-charts.test.tsx` — empty states, SVG renders, zone table, insight card
+
+---
+
+## Next Prompt
+
+Prompt 37 — Cricket Community, News, Polls, Match Threads, and Fan Engagement
+
+---
+
+# Prompt 36 — Cricket Streaming, Broadcast Overlays, OBS/vMix Integration
+
+## Executive Summary
+
+Prompt 36 implements a production-ready cricket streaming and broadcast overlay system.
+Overlay-only mode (OBS/vMix/Streamlabs browser sources) is fully supported without any external provider.
+External embed and custom RTMP are supported when operators supply URLs.
+YouTube/Twitch direct automation is stubbed and clearly gated — disabled until provider credentials are configured.
+
+---
+
+## New Migration
+
+**`0022_cricket_streaming_broadcast_overlays.sql`**
+
+New tables:
+- `cricket_streaming_channels` — per-league streaming channel registry
+- `cricket_match_streams` — per-match stream configuration (status, provider, visibility, embed URLs)
+- `cricket_overlay_themes` — per-league overlay theme definitions (colors, branding, layout)
+- `cricket_overlay_tokens` — secure overlay access tokens (hash-only, never raw)
+- `cricket_stream_events` — immutable audit log of stream lifecycle events
+- `cricket_stream_health_checks` — operator-recorded stream health metrics
+- `cricket_broadcast_checklists` — pre-broadcast checklist items per match
+
+New columns on `cricket_matches`:
+- `broadcast_status` — current broadcast state (not_configured/setup/ready/live/ended/failed)
+- `default_match_stream_id` — FK to primary stream
+- `public_broadcast_url` — shortcut to public watch URL
+- `overlay_enabled` — toggle for overlay system
+
+All tables have RLS, updated_at triggers, and indexes. Stream keys are never exposed client-side.
+
+---
+
+## New Environment Variables
+
+```env
+# Streaming feature flags
+NEXT_PUBLIC_CRICKET_STREAMING_ENABLED=true
+NEXT_PUBLIC_CRICKET_BROADCAST_OVERLAYS_ENABLED=true
+
+# Provider (overlay_only is default safe mode)
+CRICKET_STREAM_PROVIDER=overlay_only
+CRICKET_STREAM_RTMP_INGEST_URL=
+CRICKET_STREAM_PROVIDER_WEBHOOK_SECRET=
+
+# Optional providers (disabled unless explicitly set)
+YOUTUBE_LIVE_ENABLED=false
+YOUTUBE_CLIENT_ID=
+YOUTUBE_CLIENT_SECRET=
+TWITCH_LIVE_ENABLED=false
+TWITCH_CLIENT_ID=
+TWITCH_CLIENT_SECRET=
+
+# Overlay settings
+NEXT_PUBLIC_OVERLAY_REFRESH_INTERVAL_MS=2000
+NEXT_PUBLIC_OVERLAY_DEFAULT_THEME=classic
+```
+
+---
+
+## New Routes
+
+| Route | Description |
+|---|---|
+| `/cricket/matches/[slug]/broadcast` | Broadcast control room (managers only) |
+| `/cricket/matches/[slug]/watch` | Public watch page (visibility-gated) |
+| `/cricket/overlays/[slug]/scorebug` | OBS scorebug overlay |
+| `/cricket/overlays/[slug]/full-scorecard` | Full scorecard overlay |
+| `/cricket/overlays/[slug]/lower-third` | Lower third overlay |
+| `/cricket/overlays/[slug]/toss` | Toss card overlay |
+| `/cricket/overlays/[slug]/innings-break` | Innings break overlay |
+| `/cricket/overlays/[slug]/result` | Result card overlay |
+| `/cricket/overlays/[slug]/minimal` | Minimal mobile overlay |
+| `/api/cricket/overlay/[slug]/data` | Polling data endpoint for overlay refresh |
+
+---
+
+## New Files
+
+### Lib
+- `lib/cricket/overlays/data.ts` — pure overlay data builders (scorebug, toss, innings break, result, etc.)
+- `lib/cricket/overlays/tokens.ts` — token generation, hashing, verification
+- `lib/cricket/overlays/queries.ts` — overlay themes, tokens, token validation
+- `lib/cricket/overlays/actions.ts` — theme/token CRUD server actions
+- `lib/cricket/overlays/server.ts` — server-side overlay page data fetcher
+- `lib/cricket/streaming/queries.ts` — stream, channel, checklist, health queries
+- `lib/cricket/streaming/actions.ts` — stream config, status, checklist, health actions
+- `lib/cricket/streaming/providers/types.ts` — provider adapter interface
+- `lib/cricket/streaming/providers/overlay-only.ts` — overlay_only provider
+- `lib/cricket/streaming/providers/external-embed.ts` — external embed provider
+- `lib/cricket/streaming/providers/index.ts` — provider registry
+
+### Validation
+- `lib/cricket/validation/streaming.ts` — channel, stream, status, health, event, checklist schemas
+- `lib/cricket/validation/overlays.ts` — theme, token schemas
+
+### Components
+- `components/cricket/BroadcastControlRoom.tsx` — full control room UI
+- `components/cricket/overlays/OverlayScoreBug.tsx` — OBS scorebug component
+
+---
+
+## OBS / vMix Setup Instructions
+
+1. Open match → Broadcast Control Room.
+2. Generate an overlay token (label: "OBS Studio", scope: full overlay access).
+3. Copy the **Scorebug** URL — shown once only.
+4. In OBS: Sources → Browser → Paste URL.
+5. Set Width: 1920, Height: 100.
+6. Enable **transparent background** in Browser Source settings.
+7. Score balls in the Live Scoring interface.
+8. Scorebug auto-refreshes every 2 seconds via meta-refresh or polling.
+
+---
+
+## Overlay Token Security Model
+
+- Raw token: generated with 32 cryptographically random bytes (64 hex chars).
+- Token hash (SHA-256): stored in DB (`token_hash`). Never the raw token.
+- Token prefix (first 8 chars): stored for display/debug only.
+- Raw token shown to operator once at creation — never again.
+- Overlay URL contains raw token as `?token=` query param.
+- Server validates by hashing incoming token and comparing to stored hash with constant-time comparison.
+- Revoked/expired tokens are rejected before returning overlay data.
+- No private match data (emails, stream keys, internal notes) in overlay responses.
+
+---
+
+## Production Limitations
+
+| Mode | Status |
+|---|---|
+| Overlay-only (OBS/vMix browser source) | Fully supported |
+| External embed (user-supplied URL) | Supported |
+| Custom RTMP | Supported when CRICKET_STREAM_RTMP_INGEST_URL is set |
+| YouTube Live | Disabled — requires YOUTUBE_LIVE_ENABLED=true + OAuth |
+| Twitch | Disabled — requires TWITCH_LIVE_ENABLED=true + OAuth |
+| Raw stream key storage | Not implemented — requires secure encryption layer |
+
+---
+
+## Tests Added
+
+- `tests/unit/streaming-validation.test.ts` — channel, stream, checklist validation
+- `tests/unit/overlay-validation.test.ts` — theme, token validation (colors, expiry, scope)
+- `tests/unit/overlay-data.test.ts` — scorebug, toss, innings break, result, sanitize, status
+- `tests/unit/overlay-tokens.test.ts` — generation, hashing, verification, URL building
+- `tests/unit/streaming-providers.test.ts` — overlay_only, external_embed, disabled providers
+- `tests/components/broadcast-control-room.test.tsx` — UI sections, warnings, checklist
+
+---
+
+## Manual Test Flow
+
+1. Log in as league manager.
+2. Open a cricket match → click "Broadcast Control Room".
+3. Configure stream with provider: Overlay Only.
+4. Click "Save Stream Config".
+5. Generate overlay token (label: "OBS Test").
+6. Copy Scorebug URL — note it is shown only once.
+7. Open Scorebug URL in browser — should show empty state until scoring starts.
+8. Go to Live Scoring → score several balls.
+9. Return to Scorebug URL — should show updated score.
+10. Initialize broadcast checklist → tick items.
+11. Mark stream as Live.
+12. Open Watch Page → should show live score panel.
+13. Revoke overlay token → open Scorebug URL → "Overlay token revoked" shown.
+14. Mark stream as Ended.
+
+---
+
+## Operator Next Steps
+
+```
+npx supabase db push
+npm run dev
+```
+
+Then test broadcast control room, overlay tokens, and OBS browser-source overlay manually.
+
+---
+
+## Next Prompt
+
+Prompt 37 — Cricket Community, News, Polls, Match Threads, and Fan Engagement
+

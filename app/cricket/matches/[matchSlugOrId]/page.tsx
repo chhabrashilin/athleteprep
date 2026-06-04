@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Calendar, MapPin, Users, FileText, Edit, Radio } from "lucide-react";
+import { Calendar, MapPin, Users, FileText, Edit, Radio, Tv2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { getServerUser } from "@/lib/supabase/server";
 import {
@@ -14,6 +14,7 @@ import { MatchActionsPanel } from "@/components/cricket/MatchActionsPanel";
 import { ScorecardStatusBadge } from "@/components/cricket/ScorecardDisplay";
 import { userCanScoreCricketMatch } from "@/lib/cricket/scorecards/queries";
 import { getLiveMatchState } from "@/lib/cricket/live-scoring/queries";
+import { getMatchStream } from "@/lib/cricket/streaming/queries";
 
 interface Props {
   params: Promise<{ matchSlugOrId: string }>;
@@ -37,7 +38,7 @@ export default async function MatchDetailPage({ params }: Props) {
 
   if (!match) notFound();
 
-  const [officials, canManage, canScore, liveState] = await Promise.all([
+  const [officials, canManage, canScore, liveState, matchStream] = await Promise.all([
     getCricketMatchOfficials(match.id).catch(() => []),
     user && match.leagueId
       ? userCanManageCricketLeague(user.id, match.leagueId)
@@ -46,6 +47,7 @@ export default async function MatchDetailPage({ params }: Props) {
       ? userCanScoreCricketMatch(user.id, match.id)
       : Promise.resolve(false),
     getLiveMatchState(match.id).catch(() => null),
+    getMatchStream(match.id).catch(() => null),
   ]);
 
   const homeTeamName = match.homeTeam?.name ?? "Home Team";
@@ -324,6 +326,66 @@ export default async function MatchDetailPage({ params }: Props) {
                 </Link>
               )}
             </div>
+          </div>
+
+          {/* Analytics card */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Analytics</p>
+            <Link
+              href={`/cricket/matches/${match.slug ?? match.id}/analytics`}
+              className="block w-full rounded-lg border border-sky-500/30 bg-sky-500/5 px-3 py-2 text-center text-sm font-medium text-sky-400 hover:bg-sky-500/10 transition-colors"
+            >
+              View Match Analytics
+            </Link>
+          </div>
+
+          {/* Broadcast card */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Tv2 className="h-3.5 w-3.5 text-purple-400" />
+                Broadcast
+              </p>
+              {matchStream && (
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  matchStream.status === "live" ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                  : matchStream.status === "ready" ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                  : "bg-slate-700 text-slate-400"
+                }`}>
+                  {matchStream.status === "live" && <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse mr-1" />}
+                  {matchStream.status.replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              {matchStream?.publicWatchUrl && (
+                <a
+                  href={matchStream.publicWatchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full rounded-lg bg-purple-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-purple-500 transition-colors"
+                >
+                  Watch Stream
+                </a>
+              )}
+              <Link
+                href={`/cricket/matches/${match.slug ?? match.id}/watch`}
+                className="block w-full rounded-lg border border-purple-500/30 px-3 py-2 text-center text-sm font-medium text-purple-400 hover:bg-purple-500/10 transition-colors"
+              >
+                Watch Page
+              </Link>
+              {canManage && (
+                <Link
+                  href={`/cricket/matches/${match.slug ?? match.id}/broadcast`}
+                  className="block w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-center text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+                >
+                  Broadcast Control Room
+                </Link>
+              )}
+            </div>
+            {!matchStream && (
+              <p className="text-xs text-slate-500">No stream configured.</p>
+            )}
           </div>
 
           {/* Manager actions */}
