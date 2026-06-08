@@ -645,3 +645,202 @@ $$;
 --   (demo_team_id, demo_game_id, 3120, 'Set piece opportunity',     'set_piece',            'medium',   'Free kick 25 yards. Poor delivery.'),
 --   (demo_team_id, demo_game_id, 3600, 'Pressing trap success',     'tactical_success',     'high',     'Won the ball in opponent half via coordinated press. Led to chance.');
 */
+
+-- ---------------------------------------------------------------------------
+-- Commerce Seed Data (Prompt 38) — idempotent, safe to re-run
+-- Requires: cricket_leagues, cricket_teams to exist in the database.
+-- Vendor IDs are deterministic UUIDs to allow idempotent upserts.
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  demo_vendor_id  uuid := 'cv000000-0000-0000-0000-000000000001';
+  demo_league_id  uuid;
+  demo_team_id    uuid;
+begin
+  -- Resolve first available demo league
+  select id into demo_league_id from public.cricket_leagues limit 1;
+  select id into demo_team_id   from public.cricket_teams   limit 1;
+
+  -- ── Demo vendor: Madison Cricket Supplies ────────────────────────────────
+  insert into public.cricket_vendors
+    (id, league_id, name, slug, description, vendor_type, contact_name,
+     contact_email, city, country, status, visibility, created_by)
+  values
+    (demo_vendor_id,
+     demo_league_id,
+     'Madison Cricket Supplies',
+     'madison-cricket-supplies',
+     'Quality cricket equipment and team apparel for recreational and competitive leagues.',
+     'equipment',
+     'Sam Patel',
+     'sam@madisoncricket.example',
+     'Madison',
+     'US',
+     'approved',
+     'public',
+     null)
+  on conflict (id) do nothing;
+
+  -- ── Demo products ─────────────────────────────────────────────────────────
+
+  -- English Willow Training Bat
+  insert into public.cricket_products
+    (id, vendor_id, name, slug, short_description, product_type, status,
+     visibility, currency, price_cents, min_order_quantity, approval_status,
+     tags, image_urls)
+  values
+    ('cp000000-0000-0000-0000-000000000001',
+     demo_vendor_id,
+     'English Willow Training Bat',
+     'english-willow-training-bat',
+     'Grade 2 English willow, ideal for net practice and club training.',
+     'physical',
+     'active',
+     'public',
+     'USD',
+     7999,
+     1,
+     'approved',
+     ARRAY['bats', 'training', 'english-willow'],
+     ARRAY[]::text[])
+  on conflict (id) do nothing;
+
+  -- Match Cricket Ball Pack
+  insert into public.cricket_products
+    (id, vendor_id, name, slug, short_description, product_type, status,
+     visibility, currency, price_cents, min_order_quantity, approval_status, tags, image_urls)
+  values
+    ('cp000000-0000-0000-0000-000000000002',
+     demo_vendor_id,
+     'Match Cricket Ball Pack (6 balls)',
+     'match-cricket-ball-pack-6',
+     'Leather match balls, red, 156g, pack of 6.',
+     'physical',
+     'active',
+     'public',
+     'USD',
+     4499,
+     1,
+     'approved',
+     ARRAY['balls', 'match', 'leather'],
+     ARRAY[]::text[])
+  on conflict (id) do nothing;
+
+  -- Team Jersey Package (quote_only)
+  insert into public.cricket_products
+    (id, vendor_id, name, slug, short_description, product_type, status,
+     visibility, currency, price_cents, min_order_quantity, approval_status,
+     inventory_status, tags, image_urls)
+  values
+    ('cp000000-0000-0000-0000-000000000003',
+     demo_vendor_id,
+     'Team Jersey Package',
+     'team-jersey-package',
+     'Custom-printed jerseys with team name and number. Minimum 10 units.',
+     'team_kit',
+     'active',
+     'public',
+     'USD',
+     null,
+     10,
+     'approved',
+     'quote_only',
+     ARRAY['jerseys', 'team_kits', 'custom'],
+     ARRAY[]::text[])
+  on conflict (id) do nothing;
+
+  -- Wicketkeeping Gloves
+  insert into public.cricket_products
+    (id, vendor_id, name, slug, short_description, product_type, status,
+     visibility, currency, price_cents, min_order_quantity, approval_status, tags, image_urls)
+  values
+    ('cp000000-0000-0000-0000-000000000004',
+     demo_vendor_id,
+     'Wicketkeeping Gloves',
+     'wicketkeeping-gloves',
+     'Professional inner and outer gloves for wicketkeepers. Sizes S-XL.',
+     'physical',
+     'active',
+     'public',
+     'USD',
+     3499,
+     1,
+     'approved',
+     ARRAY['gloves', 'wicketkeeping'],
+     ARRAY[]::text[])
+  on conflict (id) do nothing;
+
+  -- ── Demo sponsorship packages ─────────────────────────────────────────────
+  if demo_league_id is not null then
+
+    insert into public.cricket_sponsorship_packages
+      (id, league_id, name, slug, description, package_type, status, visibility,
+       currency, price_cents, benefits, created_by)
+    values
+      ('csp00000-0000-0000-0000-000000000001',
+       demo_league_id,
+       'League Gold Sponsor',
+       'league-gold-sponsor',
+       'Full league naming rights and top-tier brand exposure across all matches.',
+       'league',
+       'active',
+       'public',
+       'USD',
+       250000,
+       '["Logo on all match scorecards", "Broadcast overlay branding", "Social media mentions", "Banner at all home matches", "Logo on team jerseys"]'::jsonb,
+       null),
+      ('csp00000-0000-0000-0000-000000000002',
+       demo_league_id,
+       'Broadcast Overlay Sponsor',
+       'broadcast-overlay-sponsor',
+       'Brand placement on all OBS/vMix stream overlays during live matches.',
+       'broadcast',
+       'active',
+       'public',
+       'USD',
+       75000,
+       '["Logo on scorebug overlay", "Lower-third sponsor mention", "Result overlay branding"]'::jsonb,
+       null),
+      ('csp00000-0000-0000-0000-000000000003',
+       demo_league_id,
+       'Match Day Sponsor',
+       'match-day-sponsor',
+       'Per-match sponsorship with logo on match scorecard and announcements.',
+       'match',
+       'active',
+       'public',
+       'USD',
+       15000,
+       '["Logo on match scorecard", "PA announcement", "Social post"]'::jsonb,
+       null)
+    on conflict (id) do nothing;
+
+  end if;
+
+  -- ── Demo team kit request ─────────────────────────────────────────────────
+  if demo_team_id is not null then
+
+    insert into public.cricket_team_kit_requests
+      (id, league_id, team_id, vendor_id, status, kit_type,
+       quantity_players, quantity_staff,
+       primary_color, secondary_color,
+       design_notes, currency, size_breakdown)
+    values
+      ('ckr00000-0000-0000-0000-000000000001',
+       demo_league_id,
+       demo_team_id,
+       demo_vendor_id,
+       'draft',
+       'full_team_kit',
+       11, 3,
+       '#1e40af', '#ffffff',
+       'Team name on back, sponsor logo on front left chest. Bold sans-serif font.',
+       'USD',
+       '{"XS": 1, "S": 3, "M": 5, "L": 4, "XL": 1}'::jsonb)
+    on conflict (id) do nothing;
+
+  end if;
+
+end;
+$$;

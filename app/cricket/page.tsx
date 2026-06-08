@@ -89,7 +89,11 @@ const ROADMAP_MODULES: { name: string; description: string; status: CricketModul
   { name: "Match Threads",            description: "Per-match fan discussion threads with moderation and slow-mode.",     status: "available",        href: "/cricket/leagues" },
   { name: "In-App Notifications",     description: "Real-time in-app notifications for announcements, comments, polls, and match events.", status: "available", href: "/cricket/notifications" },
   { name: "Content Moderation",       description: "Report, review, approve/hide content, and moderation action log.",   status: "available",        href: "/cricket/leagues" },
-  { name: "Equipment Marketplace",    description: "Bat, gear, and cricket equipment listings.",                          status: "coming_soon",      href: "/cricket/store" },
+  { name: "Equipment Marketplace",    description: "Bat, gear, and cricket equipment listings from approved vendors.",   status: "available",        href: "/cricket/store" },
+  { name: "Team Kit Orders",          description: "Submit design requests for jerseys, full team kits, and fan merchandise.", status: "available",    href: "/cricket/teams" },
+  { name: "Sponsorship Inventory",    description: "League and match sponsorship packages with inquiry management.",          status: "available",        href: "/cricket/sponsorship" },
+  { name: "Vendor Portal",            description: "Vendors can apply, list products, and manage order requests.",            status: "available",        href: "/cricket/vendor" },
+  { name: "Commerce Admin",           description: "League admins approve vendors and products, review orders.",              status: "available",        href: "/cricket/leagues" },
 ];
 
 export default async function CricketHubPage() {

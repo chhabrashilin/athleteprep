@@ -14,6 +14,7 @@ import {
   ListOrdered,
   ChevronRight,
   BarChart2,
+  ShoppingBag,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { getServerUser } from "@/lib/supabase/server";
@@ -173,6 +174,20 @@ export default async function CricketLeagueDetailPage({ params }: Props) {
       description: "Ball-by-ball scorecards and innings details.",
       available: false,
       icon: <ClipboardList className="h-4 w-4" />,
+    },
+    {
+      label: "Commerce",
+      description: "Vendors, product approvals, orders, and sponsorship management.",
+      href: `/cricket/leagues/${slug}/commerce`,
+      available: canManage,
+      icon: <ShoppingBag className="h-4 w-4" />,
+    },
+    {
+      label: "Sponsorship",
+      description: "Sponsorship packages and inquiries for this league.",
+      href: `/cricket/leagues/${slug}/sponsors`,
+      available: true,
+      icon: <Trophy className="h-4 w-4" />,
     },
   ];
 

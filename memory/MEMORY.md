@@ -12,3 +12,4 @@
 - [Prompt 31 — Cricket Match Scheduling](project_prompt31_scheduling.md) — Venue management, fixture generation, conflict detection, schedule calendar, 8 new routes, migration 0017, 470 tests pass
 - [Prompt 34 — Cricket Standings & Leaderboards](project_prompt34_standings.md) — Points table, NRR, player stats, batting/bowling/fielding leaderboards, team stats, migration 0020, 3 new routes, 770 tests pass
 - [Prompt 35 — Cricket Visual Analytics](project_prompt35_analytics.md) — Worm/Manhattan/run-rate/wagon-wheel/partnership/momentum charts (pure SVG), migration 0021, 2 new routes, shot details in live scoring, 840 tests pass
+- [Prompt 38 — Cricket Commerce](project_prompt38_commerce.md) — Marketplace, vendor portal, team kit orders, sponsorship packages/inquiries, commerce audit log, migration 0024, 26 new routes, 1118 tests pass

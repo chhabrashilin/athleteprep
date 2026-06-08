@@ -9,6 +9,7 @@ import {
   BarChart2,
   Calendar,
   ChevronRight,
+  ShoppingBag,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { getServerUser } from "@/lib/supabase/server";
@@ -184,6 +185,13 @@ export default async function CricketTeamPage({ params }: Props) {
               description: "Team and player statistics.",
               available: false,
               icon: <BarChart2 className="h-4 w-4" />,
+            },
+            {
+              label: "Team Kits",
+              description: "Submit kit design requests and track order status.",
+              href: `/cricket/teams/${teamSlug}/kits`,
+              available: true,
+              icon: <ShoppingBag className="h-4 w-4" />,
             },
           ].map((mod) => {
             const inner = (

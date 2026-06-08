@@ -94,16 +94,16 @@ export interface FeatureFlags {
   /** Cricket broadcast overlay system (OBS/vMix browser sources). */
   cricketBroadcastOverlaysEnabled: boolean;
 
-  /** Cricket equipment/merchandise marketplace — not yet implemented. */
+  /** Cricket equipment/merchandise marketplace. */
   cricketMarketplaceEnabled: boolean;
 
-  /** Cricket news, trivia, and polls — not yet implemented. */
+  /** Cricket news, trivia, and polls. */
   cricketNewsEnabled: boolean;
 
-  /** Ball-by-ball live scoring interface — not yet implemented. */
+  /** Ball-by-ball live scoring interface. */
   cricketLiveScoringEnabled: boolean;
 
-  /** Advanced analytics: wagon wheel, Manhattan graph, worm chart — not yet implemented. */
+  /** Advanced analytics: wagon wheel, Manhattan graph, worm chart. */
   cricketAdvancedAnalyticsEnabled: boolean;
 
   // ─── Prompt 37 — Community & Fan Engagement ─────────────────────────────────
@@ -119,6 +119,17 @@ export interface FeatureFlags {
 
   /** In-app notification center. No external provider required. */
   cricketInAppNotificationsEnabled: boolean;
+
+  // ─── Prompt 38 — Commerce & Marketplace ─────────────────────────────────────
+
+  /** Team kit inquiry/order request flow. */
+  cricketTeamKitOrdersEnabled: boolean;
+
+  /** Sponsorship package listings and inquiries. */
+  cricketSponsorshipEnabled: boolean;
+
+  /** Vendor self-service portal (apply, manage products, view orders). */
+  cricketVendorPortalEnabled: boolean;
 }
 
 export const flags: FeatureFlags = {
@@ -133,7 +144,7 @@ export const flags: FeatureFlags = {
   cricketSocialEnabled: boolFlag("NEXT_PUBLIC_CRICKET_SOCIAL_ENABLED", false),
   cricketStreamingEnabled: boolFlag("NEXT_PUBLIC_CRICKET_STREAMING_ENABLED", true),
   cricketBroadcastOverlaysEnabled: boolFlag("NEXT_PUBLIC_CRICKET_BROADCAST_OVERLAYS_ENABLED", true),
-  cricketMarketplaceEnabled: boolFlag("NEXT_PUBLIC_CRICKET_MARKETPLACE_ENABLED", false),
+  cricketMarketplaceEnabled: boolFlag("NEXT_PUBLIC_CRICKET_MARKETPLACE_ENABLED", true),
   cricketNewsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_NEWS_ENABLED", false),
   cricketLiveScoringEnabled: boolFlag("NEXT_PUBLIC_CRICKET_LIVE_SCORING_ENABLED", false),
   cricketAdvancedAnalyticsEnabled: boolFlag(
@@ -144,6 +155,9 @@ export const flags: FeatureFlags = {
   cricketPollsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_POLLS_ENABLED", true),
   cricketMatchThreadsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_MATCH_THREADS_ENABLED", true),
   cricketInAppNotificationsEnabled: boolFlag("NEXT_PUBLIC_CRICKET_IN_APP_NOTIFICATIONS_ENABLED", true),
+  cricketTeamKitOrdersEnabled: boolFlag("NEXT_PUBLIC_CRICKET_TEAM_KIT_ORDERS_ENABLED", true),
+  cricketSponsorshipEnabled: boolFlag("NEXT_PUBLIC_CRICKET_SPONSORSHIP_ENABLED", true),
+  cricketVendorPortalEnabled: boolFlag("NEXT_PUBLIC_CRICKET_VENDOR_PORTAL_ENABLED", true),
 };
 
 // ─── Named re-exports (existing flags) ────────────────────────────────────────
@@ -210,4 +224,29 @@ export function isCricketMatchThreadsEnabled(): boolean {
 
 export function isCricketInAppNotificationsEnabled(): boolean {
   return flags.cricketInAppNotificationsEnabled;
+}
+
+// ─── Prompt 38 — Commerce function exports ────────────────────────────────────
+
+export function isCricketTeamKitOrdersEnabled(): boolean {
+  return flags.cricketTeamKitOrdersEnabled;
+}
+
+export function isCricketSponsorshipEnabled(): boolean {
+  return flags.cricketSponsorshipEnabled;
+}
+
+export function isCricketVendorPortalEnabled(): boolean {
+  return flags.cricketVendorPortalEnabled;
+}
+
+/** Returns the server-side commerce mode based on env config. */
+export function getCommerceCheckoutProvider(): "request_only" | "stripe" | "unknown" {
+  const provider = process.env.CRICKET_CHECKOUT_PROVIDER ?? "request_only";
+  if (provider === "stripe") return "stripe";
+  return "request_only";
+}
+
+export function isCricketPaymentsEnabled(): boolean {
+  return process.env.CRICKET_PAYMENTS_ENABLED === "true";
 }

@@ -1554,3 +1554,117 @@ Then test league community, match threads, polls, notification center, and moder
 
 Prompt 38 — Cricket Equipment Marketplace, Team Kit Orders, Sponsorship Inventory, and Commerce Foundation
 
+---
+
+# Prompt 38 — Cricket Commerce Marketplace, Vendor Portal, Sponsorship, Team Kit Orders
+
+## What Was Added
+
+### Commerce Foundation
+- **Vendor Catalog** — Vendors apply, get approved by league admins, list products publicly.
+- **Product Catalog** — Approved products browseable on `/cricket/store` with category + search filters.
+- **Cart & Checkout** — Cart drawer, cart page, request-only checkout flow.
+- **Order Management** — Order creation, status tracking, buyer/vendor/admin views.
+- **Team Kit Requests** — Full kit request flow: draft → submit → review → quote → approve → produce → deliver.
+- **Sponsorship Packages** — Leagues create packages; public inquiry form; admin inquiry management.
+- **Commerce Audit Log** — `cricket_commerce_events` for all meaningful commerce actions.
+- **Provider-Gated Checkout** — `request_only` (always safe) + `stripe` (enabled only with keys + flag).
+
+### New Migration
+`supabase/migrations/0024_cricket_commerce_marketplace.sql`
+
+Tables: `cricket_vendors`, `cricket_product_categories`, `cricket_products`, `cricket_product_variants`, `cricket_product_reviews`, `cricket_carts`, `cricket_cart_items`, `cricket_orders`, `cricket_order_items`, `cricket_team_kit_requests`, `cricket_sponsorship_packages`, `cricket_sponsorship_inquiries`, `cricket_commerce_events`.
+
+### New Routes
+
+| Route | Purpose |
+|---|---|
+| `/cricket/store` | Public marketplace |
+| `/cricket/store/products/[vendorSlug]/[productSlug]` | Product detail |
+| `/cricket/store/vendors` | Vendor list |
+| `/cricket/store/vendors/[vendorSlug]` | Vendor profile |
+| `/cricket/store/cart` | Cart page |
+| `/cricket/store/checkout` | Request-only checkout form |
+| `/cricket/store/orders` | Buyer's order history |
+| `/cricket/store/orders/[orderId]` | Order detail |
+| `/cricket/vendor` | Vendor dashboard |
+| `/cricket/vendor/apply` | Vendor application form |
+| `/cricket/vendor/products` | Vendor product list |
+| `/cricket/vendor/products/new` | Create product |
+| `/cricket/vendor/products/[productId]/edit` | Edit product |
+| `/cricket/vendor/orders` | Vendor order inbox |
+| `/cricket/leagues/[slug]/commerce` | League commerce hub |
+| `/cricket/leagues/[slug]/commerce/vendors` | Vendor approval admin |
+| `/cricket/leagues/[slug]/commerce/products` | Product approval admin |
+| `/cricket/leagues/[slug]/commerce/orders` | League commerce orders |
+| `/cricket/teams/[teamSlug]/kits` | Team kit request list |
+| `/cricket/teams/[teamSlug]/kits/new` | New kit request form |
+| `/cricket/teams/[teamSlug]/kits/[requestId]` | Kit request detail |
+| `/cricket/sponsorship` | Public sponsorship discovery |
+| `/cricket/leagues/[slug]/sponsors` | League sponsorship packages |
+| `/cricket/leagues/[slug]/sponsors/new` | Admin: create sponsorship package |
+| `/cricket/leagues/[slug]/sponsors/inquiries` | Admin: sponsorship inquiry inbox |
+
+### Commerce Safety Model
+- **No raw card storage** — All payment processing via provider redirect (Stripe Checkout Sessions only).
+- **No prohibited categories** — Policy engine blocks gambling, alcohol, supplements, weapons, adult content, etc.
+- **Vendor approval required** — No vendor appears publicly until league admin approves.
+- **Product approval required** — No product appears publicly until league admin approves.
+- **Private orders protected** — `user_can_view_cricket_order()` RLS helper prevents unauthorized access.
+- **Internal notes hidden** — `internal_notes` field never included in public order payload.
+- **Payment provider gated** — `CRICKET_PAYMENTS_ENABLED=false` by default; UI shows "Request quote" not "Pay now".
+
+### Environment Variables Added
+```
+NEXT_PUBLIC_CRICKET_MARKETPLACE_ENABLED=true
+NEXT_PUBLIC_CRICKET_TEAM_KIT_ORDERS_ENABLED=true
+NEXT_PUBLIC_CRICKET_SPONSORSHIP_ENABLED=true
+NEXT_PUBLIC_CRICKET_VENDOR_PORTAL_ENABLED=true
+CRICKET_CHECKOUT_PROVIDER=request_only
+CRICKET_PAYMENTS_ENABLED=false
+STRIPE_SECRET_KEY=          # server-side only — never NEXT_PUBLIC_
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+CRICKET_COMMERCE_REQUIRE_PRODUCT_APPROVAL=true
+CRICKET_COMMERCE_REQUIRE_VENDOR_APPROVAL=true
+CRICKET_COMMERCE_ALLOW_PUBLIC_MARKETPLACE=true
+CRICKET_COMMERCE_DEFAULT_CURRENCY=USD
+CRICKET_COMMERCE_MAX_PRODUCT_IMAGES=8
+CRICKET_COMMERCE_MAX_ORDER_QUANTITY=999
+```
+
+### Manual Test Flow
+1. Log in.
+2. Navigate to `/cricket/vendor/apply` → submit vendor application.
+3. As league admin, go to `/cricket/leagues/[slug]/commerce/vendors` → approve vendor.
+4. As vendor, go to `/cricket/vendor/products/new` → create product.
+5. As league admin, go to `/cricket/leagues/[slug]/commerce/products` → approve product.
+6. Browse `/cricket/store` → find approved product.
+7. Go to `/cricket/store/checkout` → submit order request.
+8. View order at `/cricket/store/orders/[orderId]`.
+9. Go to `/cricket/teams/[teamSlug]/kits/new` → submit kit request.
+10. Go to `/cricket/leagues/[slug]/sponsors/new` → create sponsorship package.
+11. Go to `/cricket/leagues/[slug]/sponsors` → submit inquiry.
+12. Go to `/cricket/leagues/[slug]/sponsors/inquiries` → view inquiry as admin.
+
+### Known Limitations
+- Real payments disabled unless `CRICKET_PAYMENTS_ENABLED=true` + Stripe keys are configured.
+- No external inventory sync.
+- No shipping carrier integration.
+- No tax automation.
+- No real vendor payout system.
+- Vendor portal product editor is minimal (full WYSIWYG editor deferred).
+
+## Operator Next Steps
+
+```bash
+npx supabase db push
+npm run dev
+```
+
+Then test marketplace, vendor portal, product approval, cart/order request, team kit request, sponsorship inquiry, and public/private visibility.
+
+## Next Prompt
+
+Prompt 39 — Production Hardening, Security Audit, QA Automation, Observability, Admin Controls, and Release Readiness
+
